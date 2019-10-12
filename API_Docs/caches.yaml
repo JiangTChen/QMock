@@ -1,0 +1,19 @@
+get all custom responses
+---
+tags:
+- name: Custom Response
+summary: get or delete all custom responses
+produces:
+- application/json
+definitions:
+  AllCustomResponse:
+    type: array
+    items:
+      type: object
+responses:
+ 200:
+   description: The fake data for the API
+   schema:
+     $ref: '#/definitions/AllCustomResponse'
+ 400:
+   description: Invalid input

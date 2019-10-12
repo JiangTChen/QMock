@@ -1,0 +1,192 @@
+# ------------------- Deployment ------------------- #
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    k8s-app: mock-server
+  name: mock-server
+  namespace: lab-02
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: mock-server
+  template:
+    metadata:
+      labels:
+        k8s-app: mock-server
+    spec:
+      containers:
+        - name: mock-server
+          image: qa-gov.cn.lab/mock-server:$BUILD_NUMBER
+          env:
+            - name: NODE_ENV
+              value: production
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1.0"
+            limits:
+              memory: "2Gi"
+              cpu: "1.0"
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    k8s-app: ura-mongo
+  name: ura-mongo
+  namespace: lab-02
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      k8s-app: ura-mongo
+  template:
+    metadata:
+      labels:
+        k8s-app: ura-mongo
+    spec:
+      containers:
+        - name: ura-mongo
+          image: qa-gov.cn.lab/mongo:latest
+          ports:
+            - containerPort: 27017
+          resources:
+            requests:
+              memory: "8Gi"
+              cpu: "2.0"
+            limits:
+              memory: "8Gi"
+              cpu: "2.0"
+          volumeMounts:
+            - name: ura-mongo-volume
+              mountPath: /data/db
+      volumes:
+        - name: ura-mongo-volume
+          persistentVolumeClaim:
+            claimName: mongo-data
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    k8s-app: ura-mongo-express
+  name: ura-mongo-express
+  namespace: lab-02
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      k8s-app: ura-mongo-express
+  template:
+    metadata:
+      labels:
+        k8s-app: ura-mongo-express
+    spec:
+      containers:
+        - name: ura-mongo-express
+          image: qa-gov.cn.lab/mongo-express:latest
+          env:
+            - name: ME_CONFIG_BASICAUTH_USERNAME
+              value: hccer
+            - name: ME_CONFIG_BASICAUTH_PASSWORD
+              value: $ME_PASSWORD
+            - name: ME_CONFIG_MONGODB_SERVER
+              value: ura-mongo
+            - name: ME_CONFIG_SITE_BASEURL
+              value: /mongo/ura/
+          ports:
+            - containerPort: 8081
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+---
+# ------------------- Service ------------------- #
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    k8s-app: mock-server
+  name: mock-server
+  namespace: lab-02
+spec:
+  ports:
+    - name: web
+      port: 8080
+      targetPort: 8080
+  selector:
+    k8s-app: ura
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    k8s-app: ura-mongo
+  name: ura-mongo
+  namespace: lab-02
+spec:
+  ports:
+    - name: web
+      port: 27017
+      targetPort: 27017
+  selector:
+    k8s-app: ura-mongo
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    k8s-app: ura-mongo-express
+  name: ura-mongo-express
+  namespace: lab-02
+spec:
+  ports:
+    - name: web
+      port: 8081
+      targetPort: 8081
+  selector:
+    k8s-app: ura-mongo-express
+---
+# ------------------- Ingress ------------------- #
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: mock-server
+  namespace: lab-02
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+    - host: qa-gov.cn.lab
+      http:
+        paths:
+          - backend:
+              serviceName: mock-server
+              servicePort: 8080
+            path: /mock
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ura-mongo-express
+  namespace: lab-02
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+    - host: qa-gov.cn.lab
+      http:
+        paths:
+          - backend:
+              serviceName: ura-mongo-express
+              servicePort: 8081
+            path: /mongo/ura/

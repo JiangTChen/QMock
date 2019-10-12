@@ -1,0 +1,21 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Mock Server",
+        "description": "APIs of Mock Server",
+        "contact": {
+            "responsibleOrganization": "IT Quality Governance",
+            "responsibleDeveloper": "Frank.Chen",
+            "email": "Frank.Chen@homecredit.cn",
+            "url": "www.homecredit.cn"
+        },
+        "termsOfService": "http://www.homecredit.cn/terms",
+        "version": "0.0.1"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "schemes": [
+        "http"
+    ],
+    "operationId": "getData"
+}

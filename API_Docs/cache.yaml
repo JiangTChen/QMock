@@ -1,0 +1,81 @@
+process the custom response data
+Delete or Post the custom response data
+---
+tags:
+ - name: Custom Response
+delete:
+  tags:
+    - Custom Response
+  summary: Delete custome response
+  consumes:
+    - application/x-www-form-urlencoded
+  produces:
+    - application/json
+  parameters:
+     - name: rule
+       in: formData
+       description: rule for the response
+       type: string
+       required: true
+     - name: methods
+       in: formData
+       description: methods for the response
+       type: string
+       required: true
+     - name: user
+       in: formData
+       description: user for the response
+       type: string
+
+post:
+  summary: Post custom response
+  consumes:
+  - application/json
+  produces:
+  - application/json
+  parameters:
+   - name: body
+     in: body
+     description: body for post
+     type: object
+     required: true
+     schema:
+       $ref: '#/definitions/PostCustomResponse'
+
+
+responses:
+ 200:
+   description: The fake data for the API
+ 400:
+   description: Invalid input
+
+definitions:
+  PostCustomResponse:
+    type: object
+    properties:
+      rule:
+        type: string
+        required: true
+      methods:
+        type: array
+        required: true
+        example: [POST,GET]
+        items:
+          type: string
+      value:
+        type: object
+        required: true
+      queryParameters:
+        type: string
+      bodyPatterns:
+        type: string
+      headers:
+        type: object
+      code:
+        type: integer
+      Delay:
+        type: integer
+      Permanent:
+        type: boolean
+      User:
+        type: string
