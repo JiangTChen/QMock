@@ -2,6 +2,10 @@ import os
 from constant import *
 
 debug = False
+MongoDB_Server=os.environ.get("MOCK_CONFIG_MONGODB_SERVER") if os.environ.get("MOCK_CONFIG_MONGODB_SERVER") else "127.0.0.1"
+MongoDB_Port=os.environ.get("MOCK_CONFIG_MONGODB_PORT") if os.environ.get("MOCK_CONFIG_MONGODB_PORT") else "27017"
+site_base_url=os.environ.get("MOCK_CONFIG_SITE_BASEURL") if os.environ.get("MOCK_CONFIG_SITE_BASEURL") else ""
+
 
 base_path = os.path.dirname(__file__)
 projects = ["UTA", "HCCN", "CAPPBE"]
@@ -11,10 +15,7 @@ large_data_file_name = 'LargeData'
 # DB info
 database_type = DataBaseType.MONGODB  # Execl, MongoDB
 data_service = DataBaseService.MONGODB_SERVICE  # ExeclService,MongoDBService
-#Local
-#MongoDB_address = "mongodb://mongo:27017/"
-#k8s
-MongoDB_address = "mongodb://ura-mongo:27017/"
+MongoDB_address = "mongodb://"+MongoDB_Server+":"+MongoDB_Port+"/"
 Execl_address = base_path + "/Data/"
 
 # cache info

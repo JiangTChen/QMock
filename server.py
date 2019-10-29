@@ -6,7 +6,7 @@ from Object.mock_response import MockResponse
 from global_vars import log
 import config
 import utils.data_handler as data_handle
-from flasgger import Swagger
+from flasgger import Swagger, swag_from
 from http import HTTPStatus
 from constant import *
 from Object.custom_responses_mongoDB_service import CustomResponsesMongoDBService
@@ -15,7 +15,7 @@ from datetime import datetime
 from Object.steps_pool import StepsPool
 
 app = Flask(__name__)
-IP = utils.get_host_ip()
+# IP = utils.get_host_ip()
 
 swagger = Swagger(app, template_file='API_Docs/template.json')
 
@@ -24,16 +24,16 @@ swagger = Swagger(app, template_file='API_Docs/template.json')
 database_address = eval("config." + config.database_type + "_address")
 steps_pool = StepsPool()
 custom_response_service = eval(config.cache_data_service + '()')
-IP = utils.get_host_ip()
 
 
-@app.route('/')
+@app.route(config.site_base_url + '/')
 def hello_world():
     # return 'Welcome to Mock Server'
-    return redirect('/apidocs/')
+    return redirect(config.site_base_url + '/apidocs/')
 
 
-@app.route('/<project_name>/<module_name>/<path:api_rule>', methods=['POST', 'GET', 'PUT', 'DELETE'])
+@app.route(config.site_base_url + '/<project_name>/<module_name>/<path:api_rule>',
+           methods=['POST', 'GET', 'PUT', 'DELETE'])
 def db_access(project_name, module_name, api_rule):
     database_name = project_name
     table_name = module_name
@@ -88,11 +88,12 @@ def db_access(project_name, module_name, api_rule):
         return body, code, headers
 
 
-@app.route("/cache", methods=[HTTPMethod.POST, HTTPMethod.DELETE])
+@app.route(config.site_base_url + "/cache", methods=[HTTPMethod.POST, HTTPMethod.DELETE])
+@swag_from('API_Docs/cache.yaml')
 def cache():
-    """
-    file: API_Docs/cache.yaml
-    """
+    # """
+    # file: API_Docs/cache.yaml
+    # """
     code = 200
     if request.method == HTTPMethod.DELETE:
         req = request.form.to_dict()
@@ -110,11 +111,12 @@ def cache():
     return info, code
 
 
-@app.route("/caches", methods=[HTTPMethod.GET, HTTPMethod.DELETE])
+@app.route(config.site_base_url + "/caches", methods=[HTTPMethod.GET, HTTPMethod.DELETE])
+@swag_from('API_Docs/caches.yaml')
 def caches():
-    """
-    file: API_Docs/caches.yaml
-    """
+    # """
+    # file: API_Docs/caches.yaml
+    # """
     if request.method == HTTPMethod.GET:
         return json.dumps(custom_response_service.json_obj), HTTPStatus.OK, config.default_header_dict
     else:
@@ -124,4 +126,11 @@ def caches():
 
 # app.run(host=IP, port=80, debug=config.debug)
 
-app.run(host='0.0.0.0', port=8080, debug=config.debug)
+if __name__ == "__main__":
+    log.info("------- MongoDB:" + config.MongoDB_address)
+    log.info("------- site_base_url:" + config.site_base_url)
+    app.run(host='0.0.0.0', port=8080, debug=config.debug)
+
+
+
+

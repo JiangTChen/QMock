@@ -3,103 +3,105 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   labels:
-    k8s-app: mock-server
-  name: mock-server
+    k8s-app: mock
+  name: mock
   namespace: lab-02
 spec:
   replicas: 1
   selector:
     matchLabels:
-      k8s-app: mock-server
+      k8s-app: mock
   template:
     metadata:
       labels:
-        k8s-app: mock-server
+        k8s-app: mock
     spec:
       containers:
-        - name: mock-server
-          image: qa-gov.cn.lab/mock-server:$BUILD_NUMBER
+        - name: mock
+          image: qa-gov.cn.lab/mock-server
           env:
-            - name: NODE_ENV
-              value: production
+            - name: MOCK_CONFIG_MONGODB_SERVER
+              value: mock-mongo
+            - name: MOCK_CONFIG_SITE_BASEURL
+              value: /mock
           ports:
             - containerPort: 8080
           resources:
             requests:
-              memory: "2Gi"
-              cpu: "1.0"
+              memory: "1Gi"
+              cpu: "0.5"
             limits:
-              memory: "2Gi"
-              cpu: "1.0"
+              memory: "1Gi"
+              cpu: "0.5"
 ---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
   labels:
-    k8s-app: ura-mongo
-  name: ura-mongo
+    k8s-app: mock-mongo
+  name: mock-mongo
   namespace: lab-02
 spec:
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      k8s-app: ura-mongo
+      k8s-app: mock-mongo
   template:
     metadata:
       labels:
-        k8s-app: ura-mongo
+        k8s-app: mock-mongo
     spec:
       containers:
-        - name: ura-mongo
+        - name: mock-mongo
           image: qa-gov.cn.lab/mongo:latest
           ports:
             - containerPort: 27017
           resources:
             requests:
-              memory: "8Gi"
-              cpu: "2.0"
+              memory: "2Gi"
+              cpu: "1.0"
             limits:
-              memory: "8Gi"
-              cpu: "2.0"
-          volumeMounts:
-            - name: ura-mongo-volume
-              mountPath: /data/db
-      volumes:
-        - name: ura-mongo-volume
-          persistentVolumeClaim:
-            claimName: mongo-data
+              memory: "2Gi"
+              cpu: "1.0"
+          # volumeMounts:
+          #   - name: ura-mongo-volume
+          #     mountPath: /data/db
+      # volumes:
+      #   - name: ura-mongo-volume
+      #     persistentVolumeClaim:
+      #       claimName: mongo-data
 ---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
   labels:
-    k8s-app: ura-mongo-express
-  name: ura-mongo-express
+    k8s-app: mock-mongo-express
+  name: mock-mongo-express
   namespace: lab-02
 spec:
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      k8s-app: ura-mongo-express
+      k8s-app: mock-mongo-express
   template:
     metadata:
       labels:
-        k8s-app: ura-mongo-express
+        k8s-app: mock-mongo-express
     spec:
       containers:
-        - name: ura-mongo-express
+        - name: mock-mongo-express
           image: qa-gov.cn.lab/mongo-express:latest
           env:
-            - name: ME_CONFIG_BASICAUTH_USERNAME
-              value: hccer
-            - name: ME_CONFIG_BASICAUTH_PASSWORD
-              value: $ME_PASSWORD
+            # - name: ME_CONFIG_BASICAUTH_USERNAME
+            #   value: mock
+            # - name: ME_CONFIG_BASICAUTH_PASSWORD
+            #   value: $ME_PASSWORD
             - name: ME_CONFIG_MONGODB_SERVER
-              value: ura-mongo
+              value: mock-mongo
             - name: ME_CONFIG_SITE_BASEURL
-              value: /mongo/ura/
+              value: /mongo/mock
           ports:
             - containerPort: 8081
           resources:
@@ -115,8 +117,8 @@ kind: Service
 apiVersion: v1
 metadata:
   labels:
-    k8s-app: mock-server
-  name: mock-server
+    k8s-app: mock
+  name: mock
   namespace: lab-02
 spec:
   ports:
@@ -124,14 +126,14 @@ spec:
       port: 8080
       targetPort: 8080
   selector:
-    k8s-app: ura
+    k8s-app: mock
 ---
 kind: Service
 apiVersion: v1
 metadata:
   labels:
-    k8s-app: ura-mongo
-  name: ura-mongo
+    k8s-app: mock-mongo
+  name: mock-mongo
   namespace: lab-02
 spec:
   ports:
@@ -139,14 +141,14 @@ spec:
       port: 27017
       targetPort: 27017
   selector:
-    k8s-app: ura-mongo
+    k8s-app: mock-mongo
 ---
 kind: Service
 apiVersion: v1
 metadata:
   labels:
-    k8s-app: ura-mongo-express
-  name: ura-mongo-express
+    k8s-app: mock-mongo-express
+  name: mock-mongo-express
   namespace: lab-02
 spec:
   ports:
@@ -154,13 +156,13 @@ spec:
       port: 8081
       targetPort: 8081
   selector:
-    k8s-app: ura-mongo-express
+    k8s-app: mock-mongo-express
 ---
 # ------------------- Ingress ------------------- #
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: mock-server
+  name: mock
   namespace: lab-02
   annotations:
     kubernetes.io/ingress.class: traefik
@@ -170,14 +172,14 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: mock-server
+              serviceName: mock
               servicePort: 8080
             path: /mock
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: ura-mongo-express
+  name: mock-mongo-express
   namespace: lab-02
   annotations:
     kubernetes.io/ingress.class: traefik
@@ -187,6 +189,6 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: ura-mongo-express
+              serviceName: mock-mongo-express
               servicePort: 8081
-            path: /mongo/ura/
+            path: /mongo/mock
