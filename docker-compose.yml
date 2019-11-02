@@ -9,6 +9,8 @@ services:
     restart: always
     networks:
       - mock_net
+    volumes:
+      - ~/docker_volumes/mongo/data/db:/data/db
 
   mongo-express:
     links:
@@ -25,18 +27,18 @@ services:
     environment:
       ME_CONFIG_OPTIONS_EDITORTHEME: 3024-night
 
-  mock-server:
-    links: 
-      - mongo
-    build: .
-    ports: 
-      - "8080:8080"
-    container_name: mock-server
-    restart: always
-    depends_on: 
-      - mongo
-    networks: 
-      - mock_net
+#  mock-server:
+#    links:
+#      - mongo
+#    build: .
+#    ports:
+#      - "8080:8080"
+#    container_name: mock-server
+#    restart: always
+#    depends_on:
+#      - mongo
+#    networks:
+#      - mock_net
 
 networks:
   mock_net:

@@ -3,8 +3,40 @@ from enum import Enum
 HistoryTable = "-history-"
 
 
+class MockDataParameters:
+    REQUEST = "request"
+    RESPONSE = "response"
+    EXTRA = "Extra"
+
+
+class MockDataParameterRequest:
+    URL = "url"
+    METHOD = "method"
+    QUERY_PARAMETERS = "queryParameters"
+    BODY_PATTERNS = "bodyPatterns"
+
+
+class MockDataParameterResponse:
+    HEADERS = "headers"
+    STATUS = "status"
+    BODY = "body"
+
+
+class MockDataExtra:
+    DISABLE = "Disable"
+    COMMENTS = "Comments"
+    DELAY = "Delay"
+    PERMANENT = "Permanent"
+    STEP = "Step"
+    TIMES = "Times"
+    USER = "User"
+    ENCRYPT = "Encrypt"
+    LASTCALLTIME = "LastCallTime"
+    MATCHING_RATE = 'MatchingRate'
+
+
 # column name for data
-class DataParameter:
+class DataParameter_1:
     RULE = "rule"
     METHODS = "methods"
     QUERY_PARAMETERS = "queryParameters"
@@ -15,7 +47,7 @@ class DataParameter:
 
 
 # column name for extra
-class DataExtraParameter:
+class DataExtraParameter_1:
     STATUS = "Status"
     COMMENTS = "Comments"
     DELAY = "Delay"
@@ -52,7 +84,7 @@ class DatabaseName:
 
 
 # Filter
-UnavailableStatus = ['FALSE', False, 'Duplicated']
+# UnavailableStatus = ['FALSE', False, 'Duplicated']
 
 
 # Data source Type
@@ -77,5 +109,6 @@ class OPERATION:
     DELETE = "Delete"
 
 
-class ResponseExtraParameter:
+class ExtraParameters:
     MATCHING_RATE = 'MatchingRate'
+    LASTCALLTIME = "LastCallTime"

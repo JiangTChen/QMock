@@ -2,11 +2,16 @@ from Object.singleton import Singleton
 from Object.custom_response_service_base import CustomResponsesServiceBase
 from Object.mongoDB_service import MongoDBService
 import config
-from Object.mock_response import MockResponse
-from constant import DataParameter as DP
-from constant import DataExtraParameter as DEP
-from constant import DataParameter
-from utils.data_handler import is_rule_matched_response, is_dict_matched, is_query_parameters_matched, \
+# from Object.mock_response import MockResponse
+from Object.mock_datum import MockDatum
+from constant import MockDataParameterRequest as MDRq
+from constant import MockDataParameterResponse as MDRs
+from constant import MockDataExtra as MDEx
+from constant import MockDataParameters as MDPa
+# from constant import DataParameter_1 as DP
+# from constant import DataExtraParameter_1 as DEP
+# from constant import DataParameter_1
+from utils.data_handler import is_url_matched_response, is_dict_matched, is_query_parameters_matched, \
     is_body_patterns_matched
 
 
@@ -19,22 +24,26 @@ class CustomResponsesMongoDBService(CustomResponsesServiceBase):
         self._db = self._db_service.database
         self._cache_table = self._db[config.cache_table_name]
 
-    def add(self, response: MockResponse):
-        inserted_id = self._cache_table.insert_one(response.custom_response_json_obj)
+    def add_mock_datum(self, mock_datum: MockDatum):
+        inserted_id = self._cache_table.insert_one(mock_datum.json_obj)
         return inserted_id
 
-    def remove(self, rule, methods, user=None):
-        query = {DP.RULE: rule, DP.METHODS: methods, DEP.USER: user}
+    def add(self, mock_json_obj: dict):
+        inserted_id = self._cache_table.insert_one(mock_json_obj)
+        return inserted_id
+
+    def remove(self, url, method, user=None):
+        query = {MDPa.REQUEST+'.'+MDRq.URL: url, MDPa.REQUEST+'.'+MDRq.METHOD: method, MDPa.EXTRA+'.'+MDEx.USER: user}
         return self._cache_table.delete_many(query).deleted_count
 
     def clean(self):
         self._cache_table.drop()
 
-    def get_responses(self, req, user=None):
+    def get_data(self, req, user=None):
         filtered_responses = []
         for response in self._cache_table.find():
-            if req.method in response[DataParameter.METHODS]:
-                rule_match = is_rule_matched_response(req.path, response)
+            if req.method in response[MDRq.METHOD]:
+                rule_match = is_url_matched_response(req.path, response)
                 if rule_match and response.get(user) == user:
                     query_match = is_query_parameters_matched(req, response)
                     body_match = is_body_patterns_matched(req, response)

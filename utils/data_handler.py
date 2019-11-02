@@ -1,36 +1,50 @@
 # -*- coding: utf-8 -*-
 
-import constant
+# import constant
 # from constant import DataParameter, DataExtraParameter, HTTPMethod, UnavailableStatus
+import copy
+
 from flask import request
 from Object.database_service_base import BaseDBService
+from config import default_header_dict
 from global_vars import log
 import utils.utils as utils
 import json
 import re
 from Object.mock_response import MockResponse
+from constant import MockDataParameters as MDPa, MockDataParameterResponse
+from constant import MockDataExtra as MDEx
+from constant import MockDataParameterRequest as MDRq
+from constant import MockDataParameterResponse as MDRs
+from constant import ExtraParameters
+from constant import HTTPMethod
+from Object.mock_datum import MockDatum
 
 
-def get_responses_for_request(database: BaseDBService, table_name, req: request):
-    filtered_responses = []
-    responses = database.get_available_contents_from(table_name)
-    if responses is None:
+def get_data_for_request(database: BaseDBService, table_name, req: request):
+    filtered_data = []
+    data = database.get_available_contents_from(table_name)
+    if data is None:
         log.info(
             "Please check " + database.database_name() + " table:" + table_name + '\n' + req.method + ':' + req.url)
-    elif len(responses) > 0:
+    elif len(data) > 0:
         # "_" for root
         # get rule
-        api_rule_without_module = utils.get_api_rule_without_module(req, table_name)
-        for response in responses:
-            if req.method in response[constant.DataParameter.METHODS]:
-                rule_match = is_rule_matched_response(api_rule_without_module, response)
-                if rule_match:
-                    query_match = is_query_parameters_matched(req, response)
-                    body_match = is_body_patterns_matched(req, response)
+        url_path_without_module = utils.get_url_without_module(req, table_name)
+        for datum in data:
+            mock_datum = MockDatum(datum)
+            if req.method in mock_datum.request.method:
+                url_path_match = is_url_matched_response(url_path_without_module, mock_datum)
+                if url_path_match:
+                    query_match = is_query_parameters_matched(req, mock_datum)
+                    body_match = is_body_patterns_matched(req, mock_datum)
                     if query_match > 0 and body_match > 0:
-                        response[constant.ResponseExtraParameter.MATCHING_RATE] = query_match + body_match
-                        filtered_responses.append(response)
-    return sorted(filtered_responses, key=lambda keys: keys[constant.ResponseExtraParameter.MATCHING_RATE])
+                        # datum[ExtraParameters.MATCHING_RATE] = query_match + body_match
+                        mock_datum.extra.matching_rate = query_match + body_match
+                        filtered_data.append(mock_datum)
+    # return filtered_data.sort(key=MockDatum.extra.matching_rate)
+    return sorted(filtered_data, key=lambda one_mock_datum: one_mock_datum.extra.matching_rate)
+    # return sorted(filtered_data, key=lambda keys: keys[ExtraParameters.MATCHING_RATE])
 
 
 def get_response_id(database: BaseDBService, table_name, custom_response: MockResponse):
@@ -42,9 +56,9 @@ def get_response_id(database: BaseDBService, table_name, custom_response: MockRe
 
 
 def compare_response(custom_response: MockResponse, response: dict):
-    compare_keys = [constant.DataParameter.RULE, constant.DataParameter.METHODS,
-                    constant.DataParameter.QUERY_PARAMETERS,
-                    constant.DataParameter.BODY_PATTERNS]
+    compare_keys = [constant.DataParameter_1.RULE, constant.DataParameter_1.METHODS,
+                    constant.DataParameter_1.QUERY_PARAMETERS,
+                    constant.DataParameter_1.BODY_PATTERNS]
     custom_res = custom_response.custom_response_json_obj
     for key in compare_keys:
         custom_value = custom_res.get(key)
@@ -66,19 +80,17 @@ def compare_response(custom_response: MockResponse, response: dict):
     return True
 
 
-def is_body_patterns_matched(req, response):
-    if req.method == constant.HTTPMethod.POST:
-        body_patterns = response.get(constant.DataParameter.BODY_PATTERNS)
-        body_patterns = data_to_json(body_patterns)
+def is_body_patterns_matched(req, mock_datum: MockDatum):
+    if req.method == HTTPMethod.POST:
+        body_patterns = data_to_json(mock_datum.request.body_patterns)
         body_content = utils.get_post_body_content(req)
         return is_dict_matched(body_content, body_patterns)
     return 1
 
 
-def is_query_parameters_matched(req, response):
+def is_query_parameters_matched(req, mock_datum: MockDatum):
     args = json.loads(json.dumps(req.args))
-    query_parameters = response.get(constant.DataParameter.QUERY_PARAMETERS)
-    query_parameters = data_to_json(query_parameters)
+    query_parameters = data_to_json(mock_datum.request.query_parameters)
     return is_dict_matched(args, query_parameters)
 
 
@@ -115,7 +127,8 @@ def is_dict_matched(request_content, prepared_content):
                 for key in prepared_content.keys():
                     prepared_content_value = prepared_content.get(key)
                     request_content_value = request_content.get(key)
-                    prepared_content_value_str = str(prepared_content_value).replace('-', '\\-') #re.match unsupport '-' in "dd-authorization.pop-up.template-code"
+                    prepared_content_value_str = str(prepared_content_value).replace('-',
+                                                                                     '\\-')  # re.match unsupport '-' in "dd-authorization.pop-up.template-code"
                     request_content_value_str = str(request_content_value)
                     m = re.match(prepared_content_value_str, request_content_value_str)
                     if m is None:
@@ -140,29 +153,31 @@ def is_dict_matched(request_content, prepared_content):
 #     return False
 
 
-def is_rule_matched_response(api_rule, response):
-    if '(' in response[constant.DataParameter.RULE]:  # assert rule
-        res = re.match(response[constant.DataParameter.RULE], api_rule)
-        if res is not None and res.group() == api_rule:
+def is_url_matched_response(url, mock_datum: MockDatum):
+    mock_url = mock_datum.request.url.strip().lstrip('/')
+    if '(' in mock_datum.request.url:  # assert rule
+        res = re.match(mock_url, url)
+        if res is not None and res.group() == url:
             return True
-    elif response[constant.DataParameter.RULE].strip() == api_rule:
+    elif mock_url == url:
         return True
     else:
         return False
 
 
-def remove_unable_response(responses):
-    responses_temp = []
+def remove_disable_datum(responses):
+    data_temp = []
     for response in responses:
-        if response.__contains__(constant.DataExtraParameter.STATUS):
-            status = response[constant.DataExtraParameter.STATUS]
-            if status in constant.UnavailableStatus:
+        if response.__contains__(MDPa.EXTRA) and response.get(MDPa.EXTRA).__contains__(MDEx.DISABLE):
+            disable = response.get(MDPa.EXTRA).get(MDEx.DISABLE)
+            if disable:
                 pass
             else:
-                responses_temp.append(response)
+                data_temp.append(response)
         else:
-            responses_temp.append(response)
-    return responses_temp
+            data_temp.append(response)
+    return data_temp
+
 
 # class DataBaseHandler:
 #     def __init__(self, db):
@@ -177,3 +192,11 @@ def remove_unable_response(responses):
 #             return True
 #         else:
 #             return False
+def merge_headers(mock_datum: MockDatum):
+    header_dict = copy.deepcopy(default_header_dict)
+    if mock_datum.response.headers and mock_datum.response.headers != "":
+        mock_datum_headers = mock_datum.response.headers
+        mock_datum_headers = json.loads(mock_datum_headers) if isinstance(mock_datum_headers,
+                                                                          str) else mock_datum_headers
+        header_dict.update(mock_datum_headers)
+    return header_dict

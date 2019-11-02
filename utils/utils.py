@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-import socket, json, copy
+import socket, json
 from flask import request
 import config
 from collections import Iterable
 from config import *
 import time
 from constant import *
+from Object.mock_datum import MockDatum
 
 
 def format_body_to_string(headers, value):
@@ -19,13 +20,6 @@ def format_body_to_string(headers, value):
     else:
         body = value
     return body
-
-
-def merge_headers(response):
-    header_dict = copy.deepcopy(default_header_dict)
-    if response.get(DataParameter.HEADERS) is not None and response.get(DataParameter.HEADERS) != "":
-        header_dict.update(json.loads(response.get(DataParameter.HEADERS)))
-    return header_dict
 
 
 def get_post_body_content(req: request):
@@ -48,19 +42,19 @@ def get_post_body_content(req: request):
     return body_content
 
 
-def get_api_rule_without_module(req, sheet_name):
+def get_url_without_module(req, table_name):
     path = req.path[1:]
-    api_rule = path[path.find('/') + 1:]
-    if sheet_name == api_rule[1:]:  # for root
-        api_rule = '/'
+    url_path = path[path.find('/') + 1:]
+    if table_name == url_path[1:]:  # for root
+        url_path = '/'
     else:
-        pos = api_rule.find('/', 1)
+        pos = url_path.find('/', 1)
         if pos == -1:
             pass
         else:
-            api_rule = api_rule[pos + 1:]
-    api_rule = api_rule.strip()
-    return api_rule
+            url_path = url_path[pos + 1:]
+    url_path = url_path.strip()
+    return url_path
 
 
 def replace_large_data(file_name, value):
@@ -68,7 +62,7 @@ def replace_large_data(file_name, value):
     # import  file_name
     large_data_key = '${' + file_name
     file_name = data_package + '.' + file_name
-    if large_data_key in value:
+    if value and large_data_key in value:
         start_position = value.find(large_data_key)
         end_position = value[start_position:].find('}')
         variable = value[start_position:start_position + end_position + 1]
@@ -81,9 +75,9 @@ def replace_large_data(file_name, value):
     return value
 
 
-def delay_for_response(response):
+def delay_for_response(mock_datum:MockDatum):
     try:
-        delay = int(response.get(DataExtraParameter.DELAY))
+        delay = int(mock_datum.extra.delay)
         for i in range(delay):
             time.sleep(1)
             print("-------------delay:" + str(i) + "/" + str(delay))

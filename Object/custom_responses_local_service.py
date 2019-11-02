@@ -3,8 +3,8 @@ from copy import deepcopy
 from Object.singleton import Singleton
 from Object.custom_response_service_base import CustomResponsesServiceBase
 from Object.mock_response import MockResponse
-from constant import DataParameter
-from utils.data_handler import is_rule_matched_response, is_dict_matched, is_query_parameters_matched, \
+from constant import DataParameter_1
+from utils.data_handler import is_url_matched_response, is_dict_matched, is_query_parameters_matched, \
     is_body_patterns_matched
 
 
@@ -32,11 +32,11 @@ class CustomResponsesLocalService(CustomResponsesServiceBase):
     def clean(self):
         self._custom_responses_pool = []
 
-    def get_response(self, rule, method, user='', request_query=None, request_body=None):
+    def get_datum(self, rule, method, user='', request_query=None, request_body=None):
         for response in self._custom_responses_pool:
             response = response.json_obj
-            if method in response[DataParameter.METHODS]:
-                rule_match = is_rule_matched_response(rule, response)
+            if method in response[DataParameter_1.METHODS]:
+                rule_match = is_url_matched_response(rule, response)
                 if rule_match and response.user == user:
                     query_match = is_dict_matched(request_query, response)
                     body_match = is_dict_matched(request_body, response)
@@ -49,12 +49,12 @@ class CustomResponsesLocalService(CustomResponsesServiceBase):
                             return temp
         return None
 
-    def get_responses(self, req, user=None):
+    def get_data(self, req, user=None):
         filtered_responses = []
         for response in self._custom_responses_pool:
             response = response.json_obj
-            if req.method in response[DataParameter.METHODS]:
-                rule_match = is_rule_matched_response(req.path, response)
+            if req.method in response[DataParameter_1.METHODS]:
+                rule_match = is_url_matched_response(req.path, response)
                 if rule_match and response.get(user) == user:
                     query_match = is_query_parameters_matched(req, response)
                     body_match = is_body_patterns_matched(req, response)

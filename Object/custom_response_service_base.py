@@ -19,7 +19,7 @@ class CustomResponsesServiceBase:
     def clean(self):
         print("No implement CustomResponsesServiceBase.clean")
 
-    def get_responses(self, req, user=None):
+    def get_data(self, req, user=None):
         print("No implement CustomResponsesServiceBase.get_responses")
 
     @property

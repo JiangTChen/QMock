@@ -53,14 +53,14 @@ class MongoDBService(BaseDBService):
     #         return self._table
 
     def get_available_contents_from(self, table_name):
-        responses = self.get_contents_from(table_name)
-        responses_temp = data_handler.remove_unable_response(responses)
-        return responses_temp
+        data = self.get_contents_from(table_name)
+        data_temp = data_handler.remove_disable_datum(data)
+        return data_temp
 
     def get_contents_from(self, table_name):
         table = self._database[table_name]
-        responses = self.__to_list(table.find())
-        return responses
+        data = self.__to_list(table.find())
+        return data
 
     def __to_list(self, cursor):
         data = []
@@ -92,8 +92,8 @@ class MongoDBService(BaseDBService):
     def backup_old_data(self, origin_table_name, history_table_name, res_id, operation):
         my_query = {self.id_name: res_id}
         old_data = self.query(origin_table_name, my_query)[0]
-        old_data[DataExtraParameter.OPERATION] = operation
-        old_data[DataExtraParameter.DATE] = datetime.now()
+        old_data[DataExtraParameter_1.OPERATION] = operation
+        old_data[DataExtraParameter_1.DATE] = datetime.now()
         del old_data[self.id_name]
         inserted_id = self.insert(history_table_name, old_data).inserted_id
         return old_data

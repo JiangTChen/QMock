@@ -1,5 +1,5 @@
-from constant import DataParameter as DP
-from constant import DataExtraParameter as DEP
+from constant import DataParameter_1 as DP
+from constant import DataExtraParameter_1 as DEP
 import json
 
 
