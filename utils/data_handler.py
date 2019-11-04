@@ -5,8 +5,10 @@
 import copy
 
 from flask import request
+
+import config
 from Object.database_service_base import BaseDBService
-from config import default_header_dict
+from config import default_header_dict, data_package
 from global_vars import log
 import utils.utils as utils
 import json
@@ -19,6 +21,9 @@ from constant import MockDataParameterResponse as MDRs
 from constant import ExtraParameters
 from constant import HTTPMethod
 from Object.mock_datum import MockDatum
+from utils import utils
+from utils.utils import is_json
+import xmltodict
 
 
 def get_data_for_request(database: BaseDBService, table_name, req: request):
@@ -200,3 +205,85 @@ def merge_headers(mock_datum: MockDatum):
                                                                           str) else mock_datum_headers
         header_dict.update(mock_datum_headers)
     return header_dict
+
+
+def replace_xml_for_random(xml_string, keyword, cdata=True):
+    start = xml_string.find(keyword)
+    if start > 0:
+        end = xml_string[start:].find("}") + start
+        keyword_full = xml_string[start:end + 1]
+        keyword, types, size = keyword_full[2:-1].split("_")
+        random_string = utils.gen_random_string(types, size)
+        if cdata:
+            random_string = "<![CDATA[" + random_string + "]]>"
+        xml_string = xml_string.replace(keyword_full, random_string, 1)
+        return replace_xml_for_random(xml_string, keyword, cdata)
+    return xml_string
+
+
+def reassemble_response(mock_datum: MockDatum, request: request):
+    headers = merge_headers(mock_datum)
+    status = int(mock_datum.response.status if mock_datum.response.status else 200)
+    body = mock_datum.response.body
+    body = replace_large_data(config.large_data_file_name, body)
+    body = format_body_to_string(headers, body)
+    if body.startswith("<?xml"):
+        if body.__contains__("${from_request}"):
+            body = replace_xml_from_dict(body, "${from_request}", xmltodict.parse(request.data)['xml'])
+        if body.__contains__("${Random"):
+            body = replace_xml_for_random(body, "${Random")
+    body = body if body else ''
+    return body, headers, status
+
+
+def get_first_value_from_dict_by_key(keyword, data: dict, cdata=True):
+    for key, value in data.items():
+        if isinstance(value, dict):
+            return get_first_value_from_dict_by_key(keyword, value)
+        elif keyword == key:
+            if cdata:
+                return "<![CDATA[" + value + "]]>"
+            else:
+                return value
+
+
+def replace_xml_from_dict(xml_string, keyword, org_dict, cdata=True):
+    end = xml_string.find(keyword)
+    if end > 0:
+        start = xml_string[0:end].rfind("<")
+        tag = xml_string[start + 1:end - 1]
+        value = get_first_value_from_dict_by_key(tag, org_dict)
+        xml_string = xml_string.replace(keyword, value, 1)
+        return replace_xml_from_dict(xml_string, keyword, org_dict, cdata)
+    return xml_string
+
+
+def replace_large_data(file_name, value):
+    # file_name = 'LargeData'
+    # import  file_name
+    large_data_key = '${' + file_name
+    file_name = data_package + '.' + file_name
+    if value and large_data_key in value:
+        start_position = value.find(large_data_key)
+        end_position = value[start_position:].find('}')
+        variable = value[start_position:start_position + end_position + 1]
+        variable_name = value[start_position + len(large_data_key) + 1:start_position + end_position]
+        large_data = eval(file_name + '.' + variable_name)
+        if variable == value:
+            value = eval(file_name + '.' + variable_name)
+        elif isinstance(large_data, str):
+            value = value.replace(variable, eval(file_name + '.' + variable_name))
+    return value
+
+
+def format_body_to_string(headers, value):
+    if 'json' in headers.get("Content-Type"):
+        if isinstance(value, dict):
+            body = json.dumps(value)
+        elif is_json(value):
+            body = json.dumps(json.loads(value))
+        else:
+            body = value
+    else:
+        body = value
+    return body

@@ -5,21 +5,8 @@ import config
 from collections import Iterable
 from config import *
 import time
-from constant import *
 from Object.mock_datum import MockDatum
-
-
-def format_body_to_string(headers, value):
-    if 'json' in headers.get("Content-Type"):
-        if isinstance(value, dict):
-            body = json.dumps(value)
-        elif is_json(value):
-            body = json.dumps(json.loads(value))
-        else:
-            body = value
-    else:
-        body = value
-    return body
+import random, string
 
 
 def get_post_body_content(req: request):
@@ -57,25 +44,7 @@ def get_url_without_module(req, table_name):
     return url_path
 
 
-def replace_large_data(file_name, value):
-    # file_name = 'LargeData'
-    # import  file_name
-    large_data_key = '${' + file_name
-    file_name = data_package + '.' + file_name
-    if value and large_data_key in value:
-        start_position = value.find(large_data_key)
-        end_position = value[start_position:].find('}')
-        variable = value[start_position:start_position + end_position + 1]
-        variable_name = value[start_position + len(large_data_key) + 1:start_position + end_position]
-        large_data = eval(file_name + '.' + variable_name)
-        if variable == value:
-            value = eval(file_name + '.' + variable_name)
-        elif isinstance(large_data, str):
-            value = value.replace(variable, eval(file_name + '.' + variable_name))
-    return value
-
-
-def delay_for_response(mock_datum:MockDatum):
+def delay_for_response(mock_datum: MockDatum):
     try:
         delay = int(mock_datum.extra.delay)
         for i in range(delay):
@@ -186,3 +155,12 @@ def get_host_ip():
         s.close()
     return ip
 
+
+def gen_random_string(types, size):
+    size = int(size)
+    if types == "letter+digits":
+        return ''.join(random.sample(string.ascii_letters + string.digits, size))
+    elif types == "letter":
+        return "".join(random.sample(string.ascii_letters, size))
+    elif types == "digits":
+        return "".join(random.sample(string.digits, size))

@@ -13,7 +13,7 @@ class MockDatum:
     def __init__(self, json_obj: dict):
         self.request = MockRequest(json_obj.get(MDP.REQUEST) if json_obj.get(MDP.REQUEST) else {})
         self.response = MockResponse(json_obj.get(MDP.RESPONSE) if json_obj.get(MDP.RESPONSE) else {})
-        self.extra = MockExtra(json_obj.get(MDP.EXTRA)) if json_obj.get(MDP.EXTRA) else None
+        self.extra = MockExtra(json_obj.get(MDP.EXTRA) if json_obj.get(MDP.EXTRA) else {})
         self.__original_json_obj = json_obj
 
     @property
@@ -77,7 +77,16 @@ class MockExtra:
         self.times = json_obj.get(MDEx.TIMES)
         self.last_call_time = json_obj.get(MDEx.LASTCALLTIME)
         self.matching_rate = json_obj.get(MDEx.MATCHING_RATE)
+        # self._matching_rate = json_obj.get(MDEx.MATCHING_RATE)
         # self.operation = json_obj.get(MDEx.OPERATION)
+
+    # @property
+    # def matching_rate(self):
+    #     return self._matching_rate
+    #
+    # @matching_rate.setter
+    # def matching_rate(self, value):
+    #     self._matching_rate = value
 
     @property
     def json_obj(self):

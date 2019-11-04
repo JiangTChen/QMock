@@ -4,17 +4,17 @@ import json
 from utils import data_handler
 from utils import utils
 # import utils.utils as utils
-from Object.mock_response import MockResponse
 from global_vars import log
 import config
 from flasgger import Swagger, swag_from, LazyString, LazyJSONEncoder
 from http import HTTPStatus
 from constant import *
-from Object.custom_responses_mongoDB_service import CustomResponsesMongoDBService
-from Object.mongoDB_service import MongoDBService
 from datetime import datetime
 from Object.steps_pool import StepsPool
 from Object.mock_datum import MockDatum
+from utils.data_handler import reassemble_response
+from Object.custom_responses_mongoDB_service import CustomResponsesMongoDBService
+from Object.mongoDB_service import MongoDBService
 
 app = Flask(__name__)
 # IP = utils.get_host_ip()
@@ -94,12 +94,7 @@ def db_access(project_name, module_name, url):
                 steps_pool.pool[index].extra.times -= 1
         else:
             mock_datum = data[0]  # No steps datum
-        headers = data_handler.merge_headers(mock_datum)
-        status = int(mock_datum.response.status if mock_datum.response.status else 200)
-        body = mock_datum.response.body
-        body = utils.replace_large_data(config.large_data_file_name, body)
-        body = utils.format_body_to_string(headers, body)
-        body = body if body else ''
+        body, headers, status = reassemble_response(mock_datum,request)
         print('url:' + url + ' : Response Body:', body)
         utils.delay_for_response(mock_datum)
         return body, status, headers
