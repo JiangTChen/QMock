@@ -1,3 +1,4 @@
+xmltodict
 Click==7.0
 flasgger==0.9.3
 Flask==1.1.1
