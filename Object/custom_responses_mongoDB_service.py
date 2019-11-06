@@ -41,14 +41,15 @@ class CustomResponsesMongoDBService(CustomResponsesServiceBase):
 
     def get_data(self, req, user=None):
         filtered_responses = []
-        for response in self._cache_table.find():
-            if req.method in response[MDRq.METHOD]:
-                rule_match = is_url_matched_response(req.path, response)
-                if rule_match and response.get(user) == user:
-                    query_match = is_query_parameters_matched(req, response)
-                    body_match = is_body_patterns_matched(req, response)
+        for mock_datum_json in self._cache_table.find():
+            mock_datum=MockDatum(mock_datum_json)
+            if req.method in mock_datum.request.method:
+                rule_match = is_url_matched_response(req.path, mock_datum)
+                if rule_match and mock_datum.extra.user == user:
+                    query_match = is_query_parameters_matched(req, mock_datum)
+                    body_match = is_body_patterns_matched(req, mock_datum)
                     if query_match and body_match:
-                        filtered_responses.append(response)
+                        filtered_responses.append(mock_datum)
         return filtered_responses
 
     @property
