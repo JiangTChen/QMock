@@ -56,7 +56,7 @@ def post():
 @app.route(config.site_base_url + '/<project_name>/<module_name>/<path:url>',
            methods=['POST', 'GET', 'PUT', 'DELETE'])
 def db_access(project_name, module_name, url):
-    log.info('-----> Request Url:' + request.url)
+    log.info('-----> Request Url:' + request.url+' ')
     database_name = project_name
     table_name = module_name
     if utils.is_static_file(url):
