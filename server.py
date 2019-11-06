@@ -16,6 +16,7 @@ from utils.data_handler import reassemble_response
 from Object.custom_responses_mongoDB_service import CustomResponsesMongoDBService
 from Object.mongoDB_service import MongoDBService
 from concurrent.futures import ThreadPoolExecutor
+
 executor = ThreadPoolExecutor()
 
 app = Flask(__name__)
@@ -44,8 +45,11 @@ def get():
 @app.route(config.site_base_url + '/', methods=['POST'])
 def post():
     request_body = utils.get_post_body_content(request)
+    log.info("-----> Request Url:" + request.url)
     if utils.is_json(request_body):
         request_body = json.dumps(utils.get_post_body_content(request))
+    log.info("-----> Request Body:" + request_body)
+    log.info("-----> Response Body:" + request_body)
     return request_body
 
 
@@ -106,7 +110,7 @@ def db_access(project_name, module_name, url):
             mock_datum = data[0]  # No steps datum
         body, headers, status = reassemble_response(mock_datum, request)
         utils.delay_for_response(mock_datum)
-        log.info('<----- Response Body:'+ str(body))
+        log.info('<----- Response Body:' + str(body))
         return body, status, headers
 
 
@@ -155,4 +159,4 @@ def caches():
 if __name__ == "__main__":
     log.info("------- MongoDB:" + config.MongoDB_address)
     log.info("------- site_base_url:" + config.site_base_url)
-    app.run(host='0.0.0.0', port=8080, debug=config.debug)
+    app.run(host='0.0.0.0', port=8080, debug=config.debug, threaded=True, processes=1)
