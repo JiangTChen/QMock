@@ -1,4 +1,4 @@
-from Projects.wechat_DD.constant import ScsPayResMsgReqParameters as ReqParms, ScsPayResMsgOptParameters as OptParms
+from Projects.wechat_DD.constant import ScsPayResNotifyReqParameters as ReqParms, ScsPayResNotifyOptParameters as OptParms
 
 
 class PayResultNotifyBase:

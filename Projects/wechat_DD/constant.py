@@ -1,5 +1,5 @@
-# required parameter for SUCCESS
-class ScsPayResMsgReqParameters:
+# required parameter for SUCCESS PAP Pay notify
+class ScsPayResNotifyReqParameters:
     return_code = "return_code"
     appid = "appid"
     contract_id = "contract_id"
@@ -17,7 +17,8 @@ class ScsPayResMsgReqParameters:
     sign = "sign"
 
 
-class ScsPayResMsgOptParameters:
+# Optional parameter for SUCCESS PAP Pay notify
+class ScsPayResNotifyOptParameters:
     return_msg = "return_msg"
     device_info = "device_info"
     err_code = "err_code"
@@ -29,8 +30,9 @@ class ScsPayResMsgOptParameters:
     coupon_count = "coupon_count"
     attach = "attach"
 
-# required parameter for Fail
-class FalPayResMsgReqParameters:
+
+# required parameter for Fail PAP Pay notify
+class FalPayResNotifyReqParameters:
     return_code = "return_code"
     appid = "appid"
     mch_id = "mch_id"
@@ -41,46 +43,51 @@ class FalPayResMsgReqParameters:
     contract_id = "contract_id"
 
 
-class FalPayResMsgOptParameters:
+# optional parameter for Fail PAP Pay notify
+class FalPayResNotifyOptParameters:
     err_code = "err_code"
     err_code_des = "err_code_des"
 
 
+# required parameter for PAP Pay Request
 class PAPPayApplyReqParameters:
     appid = "appid"
     mch_id = "mch_id"
     nonce_str = "nonce_str"
     sign = "sign"
-    body="body"
-    out_trade_no="out_trade_no"
-    total_fee="total_fee"
-    spbill_create_ip="spbill_create_ip"
-    notify_url="notify_url"
-    trade_type="trade_type"
-    contract_id="contract_id"
-    receipt="receipt"
+    body = "body"
+    out_trade_no = "out_trade_no"
+    total_fee = "total_fee"
+    spbill_create_ip = "spbill_create_ip"
+    notify_url = "notify_url"
+    trade_type = "trade_type"
+    contract_id = "contract_id"
+    receipt = "receipt"
 
 
+# optional parameter for PAP Pay Request
 class PAPPayApplyOptParameters:
-    detail="detail"
-    attach="attach"
-    fee_type="fee_type"
-    goods_tag="goods_tag"
+    detail = "detail"
+    attach = "attach"
+    fee_type = "fee_type"
+    goods_tag = "goods_tag"
 
 
+# required parameter for PAP Pay response
 class PAPPayApplyResReqParameters:
-    return_code="return_code"
-    return_msg="return_msg"
+    return_code = "return_code"
+    return_msg = "return_msg"
     appid = "appid"
     mch_id = "mch_id"
     nonce_str = "nonce_str"
     sign = "sign"
-    result_code="result_code"
+    result_code = "result_code"
 
 
+# optional parameter for PAP Pay response
 class PAPPayApplyResOptParameters:
-    err_code="err_code"
-    err_code_des="err_code_des"
+    err_code = "err_code"
+    err_code_des = "err_code_des"
 
 
 class CallBackType:
@@ -89,4 +96,3 @@ class CallBackType:
 
 
 sign = "sign"
-

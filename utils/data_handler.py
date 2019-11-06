@@ -255,7 +255,7 @@ def reassemble_response(mock_datum: MockDatum, req: request):
         body = wechat_dd_utils.gen_response_xml(mock_datum, req)
         if mock_datum.extra.callback:
             req_temp = copy.copy(req)
-            threading.Thread(target=wechat_dd_utils.send_callback, args=(mock_datum, req_temp)).start()
+            threading.Thread(target=wechat_dd_utils.send_pay_res_notify, args=(mock_datum, req_temp)).start()
             # executor.submit(wechat_dd_utils.send_callback(mock_datum, req))
     body = format_body_to_string(headers, body)
     body = body if body else ''

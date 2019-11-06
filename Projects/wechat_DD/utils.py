@@ -13,7 +13,7 @@ from Projects.wechat_DD.pay_result_notify import SuccessPayResultNotify, FailPay
 from constant import Variables
 import Projects.wechat_DD.config as wechat_dd_config
 import copy
-from Projects.wechat_DD.constant import ScsPayResMsgReqParameters as ScReqP
+from Projects.wechat_DD.constant import ScsPayResNotifyReqParameters as ScReqP
 from Projects.wechat_DD.constant import PAPPayApplyReqParameters as PAPReqP
 from constant import CaseType, HashType
 from global_vars import log
@@ -36,8 +36,15 @@ def gen_response_xml(mock_datum: MockDatum, req: requests):
     sign = utils.gen_hash_str(stringSignTemp, HashType.MD5, case=CaseType.UPPER)
     res_dict_sorted = dict(res_dict_sorted_list)
     res_dict_sorted[Projects.wechat_DD.constant.sign] = sign
-    for key, value in res_dict_sorted.items():
-        res_dict_sorted[key] = "<![CDATA[" + value + "]]>"
+    signed_xml = dict_to_xml(res_dict_sorted)
+    return signed_xml
+
+
+def dict_to_xml(res_dict_sorted, cdata=True, no_cdata=[]):
+    if cdata:
+        for key, value in res_dict_sorted.items():
+            if key not in no_cdata:
+                res_dict_sorted[key] = "<![CDATA[" + value + "]]>"
     signed_xml = xmltodict.unparse({"xml": res_dict_sorted})
     signed_xml = signed_xml.replace("&lt;", "<")
     signed_xml = signed_xml.replace("&gt;", ">")
@@ -77,14 +84,14 @@ def compose_stringSignTemp(stringA, key):
     return stringA + "&key=" + key
 
 
-def gen_callback_xml(mock_datum: MockDatum, req: requests):
+def gen_pay_res_notify_xml(mock_datum: MockDatum, req: requests):
     req_body = xmltodict.parse(req.data)['xml']
     if mock_datum.extra.callback.type == Projects.wechat_DD.constant.CallBackType.SUCCESS:
-        message_dict = copy.deepcopy(wechat_dd_config.success_default_data)
-        reuse_parameters = wechat_dd_config.success_reuse_parameters
+        message_dict = copy.deepcopy(wechat_dd_config.success_pay_notify_default_data)
+        reuse_parameters = wechat_dd_config.success_pay_notify_reuse_parameters
     else:
         message_dict = copy.deepcopy(wechat_dd_config.fail_default_data)
-        reuse_parameters = wechat_dd_config.fail_reuse_parameters
+        reuse_parameters = wechat_dd_config.fail_pay_notify_reuse_parameters
     # add parameters from request
     for key, value in req_body.items():
         if key in reuse_parameters:
@@ -116,12 +123,12 @@ def gen_callback_xml(mock_datum: MockDatum, req: requests):
     sign = utils.gen_hash_str(stringSignTemp, HashType.MD5)
     sorted_res_dict = dict(sorted_res_list)
     sorted_res_dict[ScReqP.sign] = sign
-    res_xml = xmltodict.unparse({"xml": sorted_res_dict})
+    res_xml = dict_to_xml(sorted_res_dict, no_cdata=[ScReqP.total_fee])
     return res_xml
 
 
-def send_callback(mock_datum: MockDatum, req: requests):
-    body = gen_callback_xml(mock_datum, req)
+def send_pay_res_notify(mock_datum: MockDatum, req: requests):
+    body = gen_pay_res_notify_xml(mock_datum, req)
     method = mock_datum.extra.callback.method
     if mock_datum.extra.callback.url == Variables.FROM_REQUEST:
         url = xmltodict.parse(req.data)['xml'][PAPReqP.notify_url]
@@ -135,7 +142,7 @@ def send_callback(mock_datum: MockDatum, req: requests):
     # time.sleep(int(mock_datum.extra.callback.delay))
     res = requests.request(method, url, headers=mock_datum.extra.callback.headers, data=body)
     log.info("<--------CallBack:" + res.url)
-    log.info("-------->CallBack response:"+res.content.decode())
+    log.info("-------->CallBack response:" + res.content.decode())
 
 
 xm = """<?xml version="1.0" encoding="UTF-8"?>
