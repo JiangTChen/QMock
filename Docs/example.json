@@ -1,0 +1,65 @@
+{
+    "_id": ObjectID("5d8c56481769be0006f833e1"),
+    "Comments": "ContractGenerating04New_Step3_DD",
+    "rule": "getContracts",
+    "methods": "GET",
+    "queryParameters": {
+        "personId": "18800000088"
+    },
+    "bodyPatterns": "",
+    "Status": "",
+    "Delay": "",
+    "Step": 3,
+    "Times": 99,
+    "headers": "",
+    "code": "",
+    "value": {
+        "code": 200,
+        "message": "1903_31,SC:Cash Loan,A:Active, XCL",
+        "value": {
+            "hasDWC": false,
+            "contracts": [
+                {
+                    "contractId": 83220069,
+                    "contractNo": "4070529834002",
+                    "contractStatus": "N",
+                    "contractType": "SC",
+                    "daysUntilNextDueDate": 0,
+                    "leftTerms": 4,
+                    "loanAmount": 15000,
+                    "nextDueDate": "2019-10-12 11:23:46.000",
+                    "nextPayAmount": 19800.66,
+                    "paidTerms": 1,
+                    "productChannel": "XCL",
+                    "startDate": "2018-03-01 14:57:38.000",
+                    "isOverdue": false,
+                    "currentLimit": null,
+                    "availableLimit": null,
+                    "maxLimit": null,
+                    "eligibleForIncrease": null,
+                    "acquisitionChannel": "CAPP",
+                    "blocked": false,
+                    "contractHandlingType": "ONLY_LOAN_CONTRACT_OF_2C",
+                    "totalToPayAmount": null,
+                    "monthlyPayment": 0,
+                    "combinedPackage": null,
+                    "flexiblePackage": false,
+                    "terms": 24,
+                    "goods": [],
+                    "daysFromLastDueDate": 413,
+                    "coBrandedCardNumber": null,
+                    "van": "1229038739109810001546391",
+                    "priority": 1,
+                    "goodsCategory": "OTHER",
+                    "annuityDay": 1,
+                    "disbursementAmount": 15000,
+                    "insurance": false,
+                    "lastDueDate": "2018-08-01 00:00:00.000",
+                    "firstDueDay": "2018-04-01 08:00:00.000",
+                    "combinedPackageAvailable": "null",
+                    "newHCPContract": false
+                }
+            ]
+        }
+    }
+}
