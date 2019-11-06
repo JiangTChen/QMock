@@ -1,4 +1,4 @@
-FROM qa-gov.cn.lab/mock-server-base:v1
+FROM qa-gov.cn.lab/mock-server-base:v1.1
 
 # create app directory
 WORKDIR /usr/src/app

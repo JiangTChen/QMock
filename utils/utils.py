@@ -36,7 +36,7 @@ def get_post_body_content(req: request):
 
 
 def get_url_without_module(req, table_name):
-    path = req.path[1:]
+    path = req.path[len(site_base_url) + 1:]
     url_path = path[path.find('/') + 1:]
     if table_name == url_path[1:]:  # for root
         url_path = '/'

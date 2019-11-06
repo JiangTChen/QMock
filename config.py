@@ -7,6 +7,7 @@ MongoDB_Server = os.environ.get("MOCK_CONFIG_MONGODB_SERVER") if os.environ.get(
 MongoDB_Port = os.environ.get("MOCK_CONFIG_MONGODB_PORT") if os.environ.get("MOCK_CONFIG_MONGODB_PORT") else "27017"
 site_base_url = os.environ.get("MOCK_CONFIG_SITE_BASEURL") if os.environ.get("MOCK_CONFIG_SITE_BASEURL") else ""
 cache_step_time = os.environ.get("MOCK_CONFIG_CACHE_STEP_TIME") if os.environ.get("MOCK_CONFIG_CACHE_STEP_TIME") else 0
+log_level = os.environ.get("MOCK_CONFIG_LOG_LEVEL") if os.environ.get("MOCK_CONFIG_LOG_LEVEL") else "INFO"
 
 base_path = os.path.dirname(__file__)
 projects = ["UTA", "HCCN", "CAPPBE"]

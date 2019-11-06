@@ -1,0 +1,31 @@
+{
+    "request": {
+        "url": "proxy",
+        "method": "POST"
+    },
+    "response": {
+        "headers": {
+            "Content-Type": "application/xml"
+        },
+        "body": {
+            "appid": "${from_request}",
+            "mch_id": "${from_request}",
+            "nonce_str": "${Random_letter+digits_16}",
+            "result_code": "SUCCESS",
+            "return_code": "SUCCESS",
+            "return_msg": "OK"
+        }
+    },
+    "Extra": {
+        "CallBack": {
+            "url": "${from_request}",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/xml"
+            },
+            "body": {},
+            "Type": "SUCCESS",
+            "Delay": 10
+        }
+    }
+}
