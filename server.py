@@ -15,6 +15,8 @@ from Object.mock_datum import MockDatum
 from utils.data_handler import reassemble_response
 from Object.custom_responses_mongoDB_service import CustomResponsesMongoDBService
 from Object.mongoDB_service import MongoDBService
+from concurrent.futures import ThreadPoolExecutor
+executor = ThreadPoolExecutor()
 
 app = Flask(__name__)
 # IP = utils.get_host_ip()
@@ -33,15 +35,24 @@ steps_pool = StepsPool()
 custom_response_service = eval(config.cache_data_service + '()')
 
 
-@app.route(config.site_base_url + '/')
-def hello_world():
+@app.route(config.site_base_url + '/', methods=['GET'])
+def get():
     # return 'Welcome to Mock Server'
     return redirect(config.site_base_url + '/apidocs/')
+
+
+@app.route(config.site_base_url + '/', methods=['POST'])
+def post():
+    request_body = utils.get_post_body_content(request)
+    if utils.is_json(request_body):
+        request_body = json.dumps(utils.get_post_body_content(request))
+    return request_body
 
 
 @app.route(config.site_base_url + '/<project_name>/<module_name>/<path:url>',
            methods=['POST', 'GET', 'PUT', 'DELETE'])
 def db_access(project_name, module_name, url):
+    log.info('-----> Request Url:' + request.url)
     database_name = project_name
     table_name = module_name
     if utils.is_static_file(url):
@@ -50,19 +61,19 @@ def db_access(project_name, module_name, url):
         db = eval(
             config.data_service + "('" + database_address + "','" + database_name + "')")
         data = steps_pool.get_data(request, table_name)
-        log.info("steps_pool:" + str(data))
+        log.debug("steps_pool:" + str(data))
         if not data:  # No steps_pool
             data = custom_response_service.get_data(request)
-            log.info("custom_response:" + str(data))
+            log.debug("custom_response:" + str(data))
             if not data:
                 data = data_handler.get_data_for_request(db, table_name, request)
-                log.info("DB_MockData:" + str(data))
+                log.debug("DB_MockData:" + str(data))
             parameters = utils.get_request_contents(request)
-            print('url:' + url + " para:", parameters)
+            # print('url:' + url + " para:", parameters)
             while data.__len__() < 1:  # debug for not found
                 info = str(
                     data.__len__()) + " Response here, please check database:" + database_name + " table:" + table_name + " rule:" + url + '\n' + request.method + ':' + request.url + '\n' + 'Body:' + parameters
-                log.info(info)
+                log.debug(info)
                 # Retry
                 if config.debug:
                     # return info, HTTPStatus.NOT_FOUND
@@ -72,8 +83,7 @@ def db_access(project_name, module_name, url):
             # if data.__len__() > 1:
             info = str(
                 data.__len__()) + " Response here, please check database:" + database_name + " table:" + table_name + " rule:" + url + '\n' + request.method + ':' + request.url + '\n' + 'Body:' + parameters
-            log.info(info)
-            print("---------------------", data)
+            log.debug(info)
             # append datum to steps_pool during steps_pool doesn't has matched data
             for mock_datum in data:
                 if mock_datum.extra.step:
@@ -94,9 +104,9 @@ def db_access(project_name, module_name, url):
                 steps_pool.pool[index].extra.times -= 1
         else:
             mock_datum = data[0]  # No steps datum
-        body, headers, status = reassemble_response(mock_datum,request)
-        print('url:' + url + ' : Response Body:', body)
+        body, headers, status = reassemble_response(mock_datum, request)
         utils.delay_for_response(mock_datum)
+        log.info('<----- Response Body:'+ str(body))
         return body, status, headers
 
 

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# import constant
-# from constant import DataParameter, DataExtraParameter, HTTPMethod, UnavailableStatus
-import copy
 
+import copy
+from concurrent.futures import ThreadPoolExecutor
 from flask import request
 
 import config
@@ -24,6 +23,12 @@ from Object.mock_datum import MockDatum
 from utils import utils
 from utils.utils import is_json
 import xmltodict
+from Projects.wechat_DD import utils as wechat_dd_utils
+from Projects.wechat_DD import config as wechat_dd_config
+from constant import Variables
+
+
+import threading
 
 
 def get_data_for_request(database: BaseDBService, table_name, req: request):
@@ -221,17 +226,38 @@ def replace_xml_for_random(xml_string, keyword, cdata=True):
     return xml_string
 
 
-def reassemble_response(mock_datum: MockDatum, request: request):
+def replace_value_for_tag(xml_string, tag, value):
+    start = xml_string.find(tag)
+    keyword_list = list(tag)
+    keyword_list.insert(1, "/")
+    keyword_end = "".join(keyword_list)
+    end = xml_string.find(keyword_end)
+    orig_text = xml_string[start:end]
+    xml_string = xml_string.replace(orig_text, value, 1)
+    return xml_string
+
+
+def get_xml_tag_keyword(xml_string, key):
+    keyword_start = tag_end = xml_string.find(key)
+    keyword_end = xml_string[keyword_start:].find("}") + keyword_start
+    keyword_full = xml_string[keyword_start:keyword_end + 1]
+    tag_start = xml_string[0:tag_end].rfind("<")
+    tag = xml_string[tag_start + 1:tag_end - 1]
+    return tag, keyword_full
+
+
+def reassemble_response(mock_datum: MockDatum, req: request):
     headers = merge_headers(mock_datum)
     status = int(mock_datum.response.status if mock_datum.response.status else 200)
     body = mock_datum.response.body
-    body = replace_large_data(config.large_data_file_name, body)
+    # body = replace_large_data(config.large_data_file_name, body)
+    if req.view_args.get("project_name") == config.Projects.wechat_DD:
+        body = wechat_dd_utils.gen_response_xml(mock_datum, req)
+        if mock_datum.extra.callback:
+            req_temp = copy.copy(req)
+            threading.Thread(target=wechat_dd_utils.send_callback, args=(mock_datum, req_temp)).start()
+            # executor.submit(wechat_dd_utils.send_callback(mock_datum, req))
     body = format_body_to_string(headers, body)
-    if body.startswith("<?xml"):
-        if body.__contains__("${from_request}"):
-            body = replace_xml_from_dict(body, "${from_request}", xmltodict.parse(request.data)['xml'])
-        if body.__contains__("${Random"):
-            body = replace_xml_for_random(body, "${Random")
     body = body if body else ''
     return body, headers, status
 

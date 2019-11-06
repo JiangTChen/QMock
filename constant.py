@@ -33,6 +33,16 @@ class MockDataExtra:
     ENCRYPT = "Encrypt"
     LASTCALLTIME = "LastCallTime"
     MATCHING_RATE = 'MatchingRate'
+    CALLBACK = "CallBack"
+
+
+class MockDataExtraCallBack:
+    URL = "url"
+    METHOD = "method"
+    HEADERS = "headers"
+    BODY = "body"
+    DELAY = "Delay"
+    TYPE = "Type"
 
 
 # column name for data
@@ -112,3 +122,24 @@ class OPERATION:
 class ExtraParameters:
     MATCHING_RATE = 'MatchingRate'
     LASTCALLTIME = "LastCallTime"
+
+
+class Variables:
+    FROM_REQUEST = "${from_request}"
+    RANDOM_PREFIX = "${Random"
+    HASH_PREFIX = "${hash"
+    Remove = "${Remove}"
+    Time = "${Now}"
+
+
+class HashType:
+    MD5 = "md5"
+    SHA256 = "sha256"
+
+
+class CaseType:
+    UPPER = "upper"
+    LOWER = "lower"
+
+
+

@@ -4,6 +4,7 @@ from constant import MockDataParameters as MDP
 from constant import MockDataParameterRequest as MDRq
 from constant import MockDataParameterResponse as MDRs
 from constant import MockDataExtra as MDEx
+from constant import MockDataExtraCallBack as MDECB
 from constant import ExtraParameters as EP
 
 import json
@@ -77,6 +78,7 @@ class MockExtra:
         self.times = json_obj.get(MDEx.TIMES)
         self.last_call_time = json_obj.get(MDEx.LASTCALLTIME)
         self.matching_rate = json_obj.get(MDEx.MATCHING_RATE)
+        self.callback = MockExtraCallBack(json_obj.get(MDEx.CALLBACK) if json_obj.get(MDEx.CALLBACK) else {})
         # self._matching_rate = json_obj.get(MDEx.MATCHING_RATE)
         # self.operation = json_obj.get(MDEx.OPERATION)
 
@@ -109,6 +111,31 @@ class MockExtra:
             json_obj[MDEx.LASTCALLTIME] = self.last_call_time
         if self.matching_rate:
             json_obj[MDEx.MATCHING_RATE] = self.matching_rate
+        return json_obj
+
+
+class MockExtraCallBack:
+    def __init__(self, json_obj: dict):
+        self.url = json_obj.get(MDECB.URL)
+        self.method = json_obj.get(MDECB.METHOD)
+        self.headers = json_obj.get(MDECB.HEADERS)
+        self.body = json_obj.get(MDECB.BODY)
+        self.delay = json_obj.get(MDECB.DELAY)
+        self.type = json_obj.get(MDECB.TYPE)
+
+    @property
+    def json_obj(self):
+        json_obj = {}
+        if self.url:
+            json_obj[MDECB.URL] = self.url
+        if self.method:
+            json_obj[MDECB.METHOD] = self.method
+        if self.headers:
+            json_obj[MDECB.HEADERS] = self.headers
+        if self.body:
+            json_obj[MDECB.BODY] = self.body
+        if self.delay:
+            json_obj[MDECB.DELAY] = self.delay
         return json_obj
 
 

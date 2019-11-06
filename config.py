@@ -8,7 +8,6 @@ MongoDB_Port = os.environ.get("MOCK_CONFIG_MONGODB_PORT") if os.environ.get("MOC
 site_base_url = os.environ.get("MOCK_CONFIG_SITE_BASEURL") if os.environ.get("MOCK_CONFIG_SITE_BASEURL") else ""
 cache_step_time = os.environ.get("MOCK_CONFIG_CACHE_STEP_TIME") if os.environ.get("MOCK_CONFIG_CACHE_STEP_TIME") else 0
 
-
 base_path = os.path.dirname(__file__)
 projects = ["UTA", "HCCN", "CAPPBE"]
 data_package = 'Data'
@@ -31,3 +30,7 @@ default_header_dict = {
     "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
     "Content-Type": "application/json;charset=UTF-8"
 }
+
+
+class Projects:
+    wechat_DD = "wechat-DD"

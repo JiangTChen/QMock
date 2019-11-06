@@ -7,6 +7,9 @@ from config import *
 import time
 from Object.mock_datum import MockDatum
 import random, string
+import hashlib
+import hmac
+from constant import HashType, CaseType
 
 
 def get_post_body_content(req: request):
@@ -23,9 +26,12 @@ def get_post_body_content(req: request):
     # get data
     if not body_content:
         data_body = req.data
+        data_body_str = data_body.decode().strip().replace("\n", "").replace("\t", "")
         # convert the json string in data to json format
-        if str(data_body).find('{') == 2 and str(data_body).find('}') == len(str(data_body)) - 2:
-            body_content = json.loads(str(req.data)[str(req.data).find('{'):str(req.data).find('}') + 1])
+        if is_json(data_body_str):
+            body_content = json.loads(data_body_str)
+        else:
+            body_content = data_body_str
     return body_content
 
 
@@ -159,8 +165,23 @@ def get_host_ip():
 def gen_random_string(types, size):
     size = int(size)
     if types == "letter+digits":
-        return ''.join(random.sample(string.ascii_letters + string.digits, size))
+        return ''.join(random.choices(string.ascii_letters + string.digits, k=size))
     elif types == "letter":
-        return "".join(random.sample(string.ascii_letters, size))
+        return "".join(random.choices(string.ascii_letters, k=size))
     elif types == "digits":
-        return "".join(random.sample(string.digits, size))
+        return "".join(random.choices(string.digits, k=size))
+
+
+def gen_hash_str(data_str, types, key=None, case=""):
+    case = case.lower()
+    if types == HashType.MD5 and key is None:
+        encode_data = hashlib.md5(data_str.encode('utf-8')).hexdigest()
+    elif types == HashType.SHA256:
+        encode_data = hmac.new(key.encode('utf-8'), data_str.encode('utf-8'), HashType.SHA256).hexdigest()
+    else:
+        encode_data = hmac.new(key.encode('utf-8'), data_str.encode('utf-8')).hexdigest()
+    if case == CaseType.UPPER:
+        encode_data = encode_data.upper()
+    elif case == CaseType.LOWER:
+        encode_data = encode_data.lower()
+    return encode_data
