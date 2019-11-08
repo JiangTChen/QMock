@@ -1,0 +1,238 @@
+# ------------------- Deployment ------------------- #
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-deployment
+  labels:
+    app: mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      volumes:
+        - name: mongo-mock
+          hostPath:
+            path: /Users/frank.chen/k8s_volumes/mongo-mock
+      containers:
+      - name: mongo
+        image: mongo
+        volumeMounts:
+          - mountPath: /data/db
+            name: mongo-mock
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+          - name: mongo-port
+            containerPort: 27017
+            hostPort: 27107  #hostPort方式，将端口暴露到集群节点
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-express-depolyment
+  labels:
+    app: mongo-express
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-express
+  template:
+    metadata:
+      labels:
+        app: mongo-express
+    spec:
+      containers:
+      - name: mongo-express
+        image: mongo-express
+        env:
+          - name: ME_CONFIG_MONGODB_SERVER
+            value: mongodb
+          - name: ME_CONFIG_SITE_BASEURL
+            value: /express/
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+          - name: mongo-express
+            containerPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-deployment
+  labels:
+    app: mock-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mock-server
+  template:
+    metadata:
+      labels:
+        app: mock-server
+    spec:
+      containers:
+      - name: mock-server
+        image: frank.lab:5000/mock-server:$BUILD_NUMBER
+        env:
+          - name: MOCK_CONFIG_MONGODB_SERVER
+            value: mongodb
+          # - name: MOCK_CONFIG_SITE_BASEURL
+          #   value: /mock
+        ports:
+          - name: http
+            containerPort: 8080
+# ------------------- Service ------------------- #
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+spec:
+  externalTrafficPolicy: Local
+  type: LoadBalancer
+  selector:
+    app: mongo
+  ports:
+  - name: mongo-port
+    port: 27017
+    targetPort: mongo-port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-express
+spec:
+  selector:
+    app: mongo-express
+  ports:
+  - name: mongo-express
+    port: 8081
+    targetPort: mongo-express
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-server
+spec:
+  selector:
+    app: mock-server
+  ports:
+  - name: mock-http
+    port: 8080
+    targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-server-https
+spec:
+  selector:
+    app: mock-server
+  ports:
+  - name: mock-https
+    port: 443
+    targetPort: http
+# ------------------- Ingress ------------------- #
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: mock-server
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`frank.lab`) && PathPrefix(`/mock`)
+      kind: Rule
+      services:
+        - name: mock-server
+          port: 8080
+      middlewares:  # deployment 没有设置 MOCK_CONFIG_SITE_BASEURL 故需要做strpprefix
+        - name: mock-stripprefix
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: mock-stripprefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /mock
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: mock-server-https
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`frank.lab`) && PathPrefix(`/mock`)
+      kind: Rule
+      services:
+        - name: mock-server-https
+          port: 443
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: mongo-express
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`frank.lab`) && PathPrefix(`/express`)
+    # - match: Host(`mongo.qa-gov.cn.lab`)
+      kind: Rule
+      services:
+        - name: mongo-express
+          port: 8081
+      # middlewares:
+#       #   - name: mongo-express-stripprefix
+# ---
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: Middleware
+# metadata:
+#   name: mongo-express-stripprefix
+# spec:
+#   stripPrefix:
+#     prefixes:
+#       - /express
+# ---
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: Middleware
+# metadata:
+#   name: mongo-express-addprefix
+# spec:
+#   addPrefix:
+#     prefixes:
+#       - /express
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: mock-monge-db
+spec:
+  entryPoints:
+    - mongo-db
+  routes:
+    - match: HostSNI(`*`)
+      kind: Rule
+      services:
+        - name: mongodb
+          port: 27017
+
+
