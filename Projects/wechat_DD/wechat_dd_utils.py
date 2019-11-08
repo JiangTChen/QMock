@@ -1,39 +1,43 @@
-import hashlib
-import hmac
 import time
 
 import xmltodict
-import json
 
 import Projects.wechat_DD.constant
-import utils.utils as utils
+import utils.global_utils as global_utils
 import requests
 from Object.mock_datum import MockDatum
-from Projects.wechat_DD.pay_result_notify import SuccessPayResultNotify, FailPayResultNotify
-from constant import Variables
+from constant import VariablesInMockDatum
 import Projects.wechat_DD.config as wechat_dd_config
 import copy
 from Projects.wechat_DD.constant import ScsPayResNotifyReqParameters as ScReqP
 from Projects.wechat_DD.constant import PAPPayApplyReqParameters as PAPReqP
 from constant import CaseType, HashType
-from global_vars import log
+# from utils.data_handler import covert_variable_mockdatum
+from utils.global_utils import send_request_with_specified_params
 
 
 def gen_response_xml(mock_datum: MockDatum, req: requests):
     res_dict = {}
     req_dict = xmltodict.parse(req.data)['xml']
     for key, value in mock_datum.response.body.items():
-        if value == Variables.FROM_REQUEST:
-            res_dict[key] = req_dict[key]
-        elif value.startswith(Variables.RANDOM_PREFIX):
-            keyword, types, size = value[2:-1].split("_")
-            res_dict[key] = utils.gen_random_string(types, size)
+        if value.startswith(VariablesInMockDatum.FROM_REQUEST_PREFIX):
+            if value.find("(") > 0:
+                req_key = value[value.find("(") + 1:value.find(")")]
+                res_dict[key] = req_dict[req_key]
+            else:
+                res_dict[key] = req_dict[key]
+        elif value.startswith(VariablesInMockDatum.RANDOM_PREFIX):
+            if value.find("(") > 0:
+                types, size = value[value.find("(") + 1:value.find(")")].split(",")
+                res_dict[key] = global_utils.gen_random_string(types, size)
+            else:
+                res_dict[key] = global_utils.gen_random_string()
         else:
             res_dict[key] = value
     res_dict_sorted_list = sorted(res_dict.items())
     stringA = compose_stringA(res_dict_sorted_list)
     stringSignTemp = compose_stringSignTemp(stringA, wechat_dd_config.key)
-    sign = utils.gen_hash_str(stringSignTemp, HashType.MD5, case=CaseType.UPPER)
+    sign = global_utils.gen_hash_str(stringSignTemp, HashType.MD5, case=CaseType.UPPER)
     res_dict_sorted = dict(res_dict_sorted_list)
     res_dict_sorted[Projects.wechat_DD.constant.sign] = sign
     signed_xml = dict_to_xml(res_dict_sorted)
@@ -59,7 +63,7 @@ def generate_signed_xml(xml_string, tag, keyword, key, cdata=True):
     stringA = compose_stringA(xml_sorted_list)
     stringSignTemp = stringA + "&key=" + key
     keyword, types = keyword[2:-1].split("_")
-    sign = utils.gen_hash_str(stringSignTemp, types.lower(), key, CaseType.UPPER)
+    sign = global_utils.gen_hash_str(stringSignTemp, types.lower(), key, CaseType.UPPER)
     xml_sorted_list.append((tag, sign))
     xml_sorted_list.sort()
     xml_sorted_dict = dict(xml_sorted_list)
@@ -101,26 +105,27 @@ def gen_pay_res_notify_xml(mock_datum: MockDatum, req: requests):
     # add custom parameters
     cb_body = mock_datum.extra.callback.body
     for key, value in cb_body.items():
-        if value == Variables.Remove:
+        if value == VariablesInMockDatum.Remove:
             message_dict.pop(key)
         else:
             message_dict[key] = value
     res_dict = {}
     for key, value in message_dict.items():
-        if value.startswith(Variables.RANDOM_PREFIX):
+        if value.startswith(VariablesInMockDatum.RANDOM_PREFIX):
             keyword, types, size = value[2:-1].split("_")
-            res = utils.gen_random_string(types, size)
+            res = global_utils.gen_random_string(types, size)
             res_dict[key] = res
-        elif value == Variables.Remove:
+        elif value == VariablesInMockDatum.Remove:
             pass
-        elif value == Variables.Time:
+        elif value == VariablesInMockDatum.Time:
             res_dict[key] = time.strftime('%Y%m%d%H%M%S', time.localtime())
         else:
             res_dict[key] = value
+
     sorted_res_list = sorted(res_dict.items())
     stringA = compose_stringA(sorted_res_list)
     stringSignTemp = compose_stringSignTemp(stringA, wechat_dd_config.key)
-    sign = utils.gen_hash_str(stringSignTemp, HashType.MD5)
+    sign = global_utils.gen_hash_str(stringSignTemp, HashType.MD5)
     sorted_res_dict = dict(sorted_res_list)
     sorted_res_dict[ScReqP.sign] = sign
     res_xml = dict_to_xml(sorted_res_dict, no_cdata=[ScReqP.total_fee])
@@ -130,19 +135,13 @@ def gen_pay_res_notify_xml(mock_datum: MockDatum, req: requests):
 def send_pay_res_notify(mock_datum: MockDatum, req: requests):
     body = gen_pay_res_notify_xml(mock_datum, req)
     method = mock_datum.extra.callback.method
-    if mock_datum.extra.callback.url == Variables.FROM_REQUEST:
+    headers = mock_datum.extra.callback.headers
+    delay = int(mock_datum.extra.callback.delay)
+    if mock_datum.extra.callback.url.startswith(VariablesInMockDatum.FROM_REQUEST_PREFIX):
         url = xmltodict.parse(req.data)['xml'][PAPReqP.notify_url]
     else:
         url = mock_datum.extra.callback.url
-    delay = int(mock_datum.extra.callback.delay)
-    for i in range(delay):
-        info = "sleep:" + str(i) + "/" + str(delay)
-        log.debug(info)
-        time.sleep(1)
-    # time.sleep(int(mock_datum.extra.callback.delay))
-    res = requests.request(method, url, headers=mock_datum.extra.callback.headers, data=body)
-    log.info("<--------CallBack:" + res.url)
-    log.info("-------->CallBack response:" + res.content.decode())
+    send_request_with_specified_params(method, url, headers, body, delay)
 
 
 xm = """<?xml version="1.0" encoding="UTF-8"?>

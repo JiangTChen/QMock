@@ -124,8 +124,8 @@ class ExtraParameters:
     LASTCALLTIME = "LastCallTime"
 
 
-class Variables:
-    FROM_REQUEST = "${from_request}"
+class VariablesInMockDatum:
+    FROM_REQUEST_PREFIX = "${from_request"
     RANDOM_PREFIX = "${Random"
     HASH_PREFIX = "${hash"
     Remove = "${Remove}"

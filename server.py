@@ -2,7 +2,7 @@ from flask import Flask, request, redirect
 
 import json
 from utils import data_handler
-from utils import utils
+from utils import global_utils
 # import utils.utils as utils
 from global_vars import log
 import config
@@ -44,22 +44,23 @@ def get():
 
 @app.route(config.site_base_url + '/', methods=['POST'])
 def post():
-    request_body = utils.get_post_body_content(request)
+    request_body = global_utils.get_post_body_content(request)
+    # request_body=json.dumps(global_utils.get_request_contents(request))
     log.info("-----> Request Url:" + request.url)
-    if utils.is_json(request_body):
-        request_body = json.dumps(utils.get_post_body_content(request))
+    if isinstance(request_body, dict):
+        request_body = json.dumps(global_utils.get_post_body_content(request))
     log.info("-----> Request Body:" + request_body)
-    log.info("-----> Response Body:" + request_body)
+    log.info("<----- Response Body:" + request_body)
     return request_body
 
 
 @app.route(config.site_base_url + '/<project_name>/<module_name>/<path:url>',
            methods=['POST', 'GET', 'PUT', 'DELETE'])
 def db_access(project_name, module_name, url):
-    log.info('-----> Request Url:' + request.url+' ')
+    log.info('-----> Request Url:' + request.url + ' ')
     database_name = project_name
     table_name = module_name
-    if utils.is_static_file(url):
+    if global_utils.is_static_file(url):
         return app.send_static_file(project_name + "/" + module_name + "/" + url)
     else:
         db = eval(
@@ -72,11 +73,12 @@ def db_access(project_name, module_name, url):
             if not data:
                 data = data_handler.get_data_for_request(db, table_name, request)
                 log.debug("DB_MockData:" + str(data))
-            parameters = utils.get_request_contents(request)
+            parameters = global_utils.get_request_contents(request)
             # print('url:' + url + " para:", parameters)
             while data.__len__() < 1:  # debug for not found
                 info = str(
-                    data.__len__()) + " Response here, please check database:" + database_name + " table:" + table_name + " rule:" + url + '\n' + request.method + ':' + request.url + '\n' + 'Body:' + parameters
+                    data.__len__()) + " Response here, please check database:" + database_name + " table:" + table_name + " rule:" + url + '\n' + request.method + ':' + request.url + '\n' + 'Body:' + json.dumps(
+                    parameters)
                 log.debug(info)
                 # Retry
                 if config.debug:
@@ -86,7 +88,8 @@ def db_access(project_name, module_name, url):
                     return info, HTTPStatus.NOT_FOUND
             # if data.__len__() > 1:
             info = str(
-                data.__len__()) + " Response here, please check database:" + database_name + " table:" + table_name + " rule:" + url + '\n' + request.method + ':' + request.url + '\n' + 'Body:' + parameters
+                data.__len__()) + " Response here, please check database:" + database_name + " table:" + table_name + " rule:" + url + '\n' + request.method + ':' + request.url + '\n' + 'Body:' + json.dumps(
+                parameters)
             log.debug(info)
             # append datum to steps_pool during steps_pool doesn't has matched data
             for mock_datum in data:
@@ -109,7 +112,7 @@ def db_access(project_name, module_name, url):
         else:
             mock_datum = data[0]  # No steps datum
         body, headers, status = reassemble_response(mock_datum, request)
-        utils.delay_for_response(mock_datum)
+        global_utils.delay_for_response(mock_datum)
         log.info('<----- Response Body:' + str(body))
         return body, status, headers
 

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import socket, json
+
+import requests
 from flask import request
 import config
 from collections import Iterable
@@ -10,6 +12,7 @@ import random, string
 import hashlib
 import hmac
 from constant import HashType, CaseType
+from global_vars import log
 
 
 def get_post_body_content(req: request):
@@ -28,7 +31,7 @@ def get_post_body_content(req: request):
         data_body = req.data
         data_body_str = data_body.decode().strip().replace("\n", "").replace("\t", "")
         # convert the json string in data to json format
-        if is_json(data_body_str):
+        if is_json_str(data_body_str):
             body_content = json.loads(data_body_str)
         else:
             body_content = data_body_str
@@ -70,7 +73,7 @@ def get_value_from_dict(my_dict: dict, my_key):
     return res
 
 
-def is_json(obj):
+def is_json_str(obj):
     try:
         json.loads(obj)
     except Exception as e:
@@ -102,15 +105,16 @@ def get_table_name(api_rule):
 
 
 def get_request_contents(req: request):
+    parameters = {}
     try:
         if len(req.values) != 0:
-            parameters = 'values:' + str(req.values)
-        elif req.json is not None:
-            parameters = 'json:' + json.dumps(req.json)
-        else:
-            parameters = 'data:' + req.data.decode()
+            parameters["values"] = req.values
+        if req.json is not None:
+            parameters["json"] = req.json
+        if req.data is not None:
+            parameters["data"] = req.data.decode()
     except Exception as ex:
-        parameters = 'error:' + str(ex)
+        parameters['error'] = str(ex)
     return parameters
 
 
@@ -162,7 +166,7 @@ def get_host_ip():
     return ip
 
 
-def gen_random_string(types, size):
+def gen_random_string(types="letter+digits", size=16):
     size = int(size)
     if types == "letter+digits":
         return ''.join(random.choices(string.ascii_letters + string.digits, k=size))
@@ -185,3 +189,19 @@ def gen_hash_str(data_str, types, key=None, case=""):
     elif case == CaseType.LOWER:
         encode_data = encode_data.lower()
     return encode_data
+
+
+def send_request_with_specified_params(method, url, headers, body, delay):
+    for i in range(delay):
+        info = "sleep:" + str(i) + "/" + str(delay)
+        log.debug(info)
+        time.sleep(1)
+    # body = json.dumps(body) if isinstance(body, dict) else body
+    res = None
+    if method == HTTPMethod.POST:
+        res = requests.post(url, data=body, json=body)
+        # res = requests.request(method, url, headers=headers, json=body, data=body)
+    elif method == HTTPMethod.GET:
+        res = requests.get(url, params=body)
+    log.info("<--------Request:" + res.url)
+    log.info("-------->response:" + res.content.decode())

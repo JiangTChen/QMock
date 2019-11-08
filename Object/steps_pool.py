@@ -1,7 +1,7 @@
 from Object.singleton import Singleton
 from constant import DataParameter_1, DataExtraParameter_1, ExtraParameters
 from utils.data_handler import is_url_matched_response, is_query_parameters_matched, is_body_patterns_matched
-from utils import utils
+from utils import global_utils
 from datetime import datetime
 from Object.mock_datum import MockDatum
 import config
@@ -47,7 +47,7 @@ class StepsPool:
 
     def get_data(self, req, table_name, user=None):
         filtered_data = []
-        url_without_module = utils.get_url_without_module(req, table_name)
+        url_without_module = global_utils.get_url_without_module(req, table_name)
         # get matched data from pool and give filtered_data
         for mock_datum in self.__pool:
             if req.method in mock_datum.request.method and mock_datum.extra.times > 0:

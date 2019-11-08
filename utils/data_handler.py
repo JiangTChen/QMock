@@ -2,33 +2,29 @@
 
 
 import copy
-from concurrent.futures import ThreadPoolExecutor
+import sys
+
 from flask import request
 
 import config
 from Object.database_service_base import BaseDBService
 from config import default_header_dict, data_package
 from global_vars import log
-import utils.utils as utils
 import json
 import re
-from Object.mock_response import MockResponse
-from constant import MockDataParameters as MDPa, MockDataParameterResponse
+from constant import MockDataParameters as MDPa
 from constant import MockDataExtra as MDEx
-from constant import MockDataParameterRequest as MDRq
-from constant import MockDataParameterResponse as MDRs
-from constant import ExtraParameters
 from constant import HTTPMethod
+from constant import VariablesInMockDatum
 from Object.mock_datum import MockDatum
-from utils import utils
-from utils.utils import is_json
-import xmltodict
-from Projects.wechat_DD import utils as wechat_dd_utils
-from Projects.wechat_DD import config as wechat_dd_config
-from constant import Variables
-
+from utils import global_utils
+# from utils.util import is_json
+from Projects.wechat_DD.wechat_dd_utils import gen_response_xml, send_pay_res_notify
+from utils import handle_variables
 
 import threading
+
+from utils.global_utils import is_json_str, send_request_with_specified_params
 
 
 def get_data_for_request(database: BaseDBService, table_name, req: request):
@@ -40,7 +36,7 @@ def get_data_for_request(database: BaseDBService, table_name, req: request):
     elif len(data) > 0:
         # "_" for root
         # get rule
-        url_path_without_module = utils.get_url_without_module(req, table_name)
+        url_path_without_module = global_utils.get_url_without_module(req, table_name)
         for datum in data:
             mock_datum = MockDatum(datum)
             if req.method in mock_datum.request.method:
@@ -57,43 +53,43 @@ def get_data_for_request(database: BaseDBService, table_name, req: request):
     # return sorted(filtered_data, key=lambda keys: keys[ExtraParameters.MATCHING_RATE])
 
 
-def get_response_id(database: BaseDBService, table_name, custom_response: MockResponse):
-    responses = database.get_contents_from(table_name)
-    for response in responses:
-        if compare_response(custom_response, response):
-            return response.get(database.id_name)
-    return None
-
-
-def compare_response(custom_response: MockResponse, response: dict):
-    compare_keys = [constant.DataParameter_1.RULE, constant.DataParameter_1.METHODS,
-                    constant.DataParameter_1.QUERY_PARAMETERS,
-                    constant.DataParameter_1.BODY_PATTERNS]
-    custom_res = custom_response.custom_response_json_obj
-    for key in compare_keys:
-        custom_value = custom_res.get(key)
-        if custom_value is None or custom_value == "":
-            pass
-        else:
-            response_value = response.get(key)
-            if utils.is_json(response_value):
-                if isinstance(custom_value, str):
-                    custom_value = custom_value.replace("'", '"')
-                if utils.is_json(custom_value):
-                    if json.loads(response_value) != json.loads(custom_value):
-                        return False
-                else:
-                    return False
-            elif type(custom_value) == type(response_value):
-                if custom_value != response_value:
-                    return False
-    return True
+# def get_response_id(database: BaseDBService, table_name, custom_response: MockResponse):
+#     responses = database.get_contents_from(table_name)
+#     for response in responses:
+#         if compare_response(custom_response, response):
+#             return response.get(database.id_name)
+#     return None
+#
+#
+# def compare_response(custom_response: MockResponse, response: dict):
+#     compare_keys = [constant.DataParameter_1.RULE, constant.DataParameter_1.METHODS,
+#                     constant.DataParameter_1.QUERY_PARAMETERS,
+#                     constant.DataParameter_1.BODY_PATTERNS]
+#     custom_res = custom_response.custom_response_json_obj
+#     for key in compare_keys:
+#         custom_value = custom_res.get(key)
+#         if custom_value is None or custom_value == "":
+#             pass
+#         else:
+#             response_value = response.get(key)
+#             if util.is_json(response_value):
+#                 if isinstance(custom_value, str):
+#                     custom_value = custom_value.replace("'", '"')
+#                 if util.is_json(custom_value):
+#                     if json.loads(response_value) != json.loads(custom_value):
+#                         return False
+#                 else:
+#                     return False
+#             elif type(custom_value) == type(response_value):
+#                 if custom_value != response_value:
+#                     return False
+#     return True
 
 
 def is_body_patterns_matched(req, mock_datum: MockDatum):
     if req.method == HTTPMethod.POST:
         body_patterns = data_to_json(mock_datum.request.body_patterns)
-        body_content = utils.get_post_body_content(req)
+        body_content = global_utils.get_post_body_content(req)
         return is_dict_matched(body_content, body_patterns)
     return 1
 
@@ -106,13 +102,13 @@ def is_query_parameters_matched(req, mock_datum: MockDatum):
 
 def data_to_json(query_or_body):
     if not isinstance(query_or_body, dict):
-        if utils.is_json(query_or_body):
+        if global_utils.is_json_str(query_or_body):
             query_or_body = json.loads(query_or_body)
         elif isinstance(query_or_body, str):
             query_or_body = query_or_body.replace("'", '"')
-            if utils.is_json(query_or_body):
+            if global_utils.is_json_str(query_or_body):
                 query_or_body = json.loads(query_or_body)
-            elif utils.is_json(query_or_body.replace('\\', '\\\\')):
+            elif global_utils.is_json_str(query_or_body.replace('\\', '\\\\')):
                 query_or_body = json.loads(query_or_body.replace('\\', '\\\\'))
             else:
                 query_or_body = {}
@@ -131,7 +127,7 @@ def is_dict_matched(request_content, prepared_content):
     if request_content:
         unmatch_key_list = [key for key in prepared_content.keys() if key not in request_content.keys()]
         if not unmatch_key_list:
-            if utils.compare_obj(prepared_content, request_content):
+            if global_utils.compare_obj(prepared_content, request_content):
                 return 1  # equal
             else:
                 for key in prepared_content.keys():
@@ -218,7 +214,7 @@ def replace_xml_for_random(xml_string, keyword, cdata=True):
         end = xml_string[start:].find("}") + start
         keyword_full = xml_string[start:end + 1]
         keyword, types, size = keyword_full[2:-1].split("_")
-        random_string = utils.gen_random_string(types, size)
+        random_string = global_utils.gen_random_string(types, size)
         if cdata:
             random_string = "<![CDATA[" + random_string + "]]>"
         xml_string = xml_string.replace(keyword_full, random_string, 1)
@@ -251,13 +247,18 @@ def reassemble_response(mock_datum: MockDatum, req: request):
     status = int(mock_datum.response.status if mock_datum.response.status else 200)
     body = mock_datum.response.body
     # body = replace_large_data(config.large_data_file_name, body)
-    if req.view_args.get("project_name") == config.Projects.wechat_DD:
-        body = wechat_dd_utils.gen_response_xml(mock_datum, req)
-        if mock_datum.extra.callback:
-            req_temp = copy.copy(req)
-            threading.Thread(target=wechat_dd_utils.send_pay_res_notify, args=(mock_datum, req_temp)).start()
+    if mock_datum.extra.callback:
+        req_temp = copy.copy(req)
+        if req.view_args.get("project_name") == config.Projects.wechat_DD:
+            body = gen_response_xml(mock_datum, req)
+            threading.Thread(target=send_pay_res_notify, args=(mock_datum, req_temp)).start()
             # executor.submit(wechat_dd_utils.send_callback(mock_datum, req))
+        else:
+            # send_callback(mock_datum, req_temp)
+            threading.Thread(target=send_callback, args=(mock_datum, req_temp)).start()
+
     body = format_body_to_string(headers, body)
+    body = handle_variables_for_str_dict(body, req)
     body = body if body else ''
     return body, headers, status
 
@@ -306,10 +307,62 @@ def format_body_to_string(headers, value):
     if 'json' in headers.get("Content-Type"):
         if isinstance(value, dict):
             body = json.dumps(value)
-        elif is_json(value):
+        elif global_utils.is_json_str(value):
             body = json.dumps(json.loads(value))
         else:
             body = value
     else:
         body = value
     return body
+
+
+def send_callback(mock_datum: MockDatum, req: request):
+    method = mock_datum.extra.callback.method
+    url = mock_datum.extra.callback.url
+    if url.startswith(VariablesInMockDatum.FROM_REQUEST_PREFIX):
+        res, orig_keyword = call_handle_variables_fun(url, req)
+        url = res
+    headers = mock_datum.extra.callback.headers
+    body = mock_datum.extra.callback.body
+    body = json.loads(body) if is_json_str(body) else body
+    body = handle_variables_for_str_dict(body, req)
+    delay = int(mock_datum.extra.callback.delay)
+    send_request_with_specified_params(method, url, headers, body, delay)
+
+
+def handle_variables_for_str_dict(body, req):
+    if isinstance(body, dict):
+        for key, value in body.items():
+            if value.startswith("${"):
+                res, orig_keyword = call_handle_variables_fun(value, req, key=key)
+                body[key] = res
+    elif isinstance(body, str):
+        while body.find("${") >= 0:
+            res, orig_keyword = call_handle_variables_fun(body, req)
+            body = body.replace(orig_keyword, res, 1)
+    return body
+
+
+def call_handle_variables_fun(value, req, key=None):
+    # value is a string with variables or the variables
+    func_name, args, orig_keyword = covert_variable_mockdatum(value)
+    obj_for_variable = getattr(handle_variables, func_name)
+    # args.append(req)
+    res = obj_for_variable(args, req=req, key=key)
+    return res, orig_keyword
+
+
+def covert_variable_mockdatum(variable: str):
+    start = variable.find("${")
+    end = variable.find("}", start)
+    orig_keyword = variable[start:end + 1]
+    orig_keyword = orig_keyword.replace("'", "").replace('"', "")
+    keywords = orig_keyword[2:- 1]
+    split_pos = keywords.find("(")
+    if split_pos > 0:
+        fun_name = keywords[:split_pos]
+        args = keywords[split_pos + 1:-1].split(",")
+    else:
+        fun_name = keywords
+        args = []
+    return fun_name, args, orig_keyword
