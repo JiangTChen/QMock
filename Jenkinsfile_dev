@@ -7,7 +7,6 @@ node('docker') {
 
 
   stage ('Deploy mock-server') {
-    def config = readFile 'kubernetes_dev.yml'
-    sh "kubectl apply -f ${config}"
+    sh "kubectl apply -f kubernetes_dev.yml"
   }
 }
