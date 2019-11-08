@@ -4,20 +4,10 @@ node('docker') {
     checkout scm
   }
 
-  def mockImage
 
-  stage ('Build mock-server') {
-    mockImage = docker.build("frank.lab:5000/mock-server:${env.BUILD_NUMBER}")
-  }
-
-  stage ('Upload image') {
-    docker.withRegistry('https://frank.lab:5000') {
-      mockImage.push()
-    }
-  }
 
   stage ('Deploy mock-server') {
     def config = readFile 'kubernetes_dev.yml'
-    sh "kubectl apply -f -\n${config}\nEOF"
+    sh "kubectl apply -f ${config}"
   }
 }
