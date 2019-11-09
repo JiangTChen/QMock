@@ -7,7 +7,7 @@ node('docker') {
   def mockImage
 
   stage ('Build mock-server') {
-    mockImage = docker.build("frank.lab/mock-server:${env.BUILD_NUMBER}")
+    mockImage = docker.build("frank.lab:5000/mock-server:${env.BUILD_NUMBER}")
   }
 
   stage ('Upload image') {
