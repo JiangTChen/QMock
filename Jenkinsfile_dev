@@ -18,6 +18,6 @@ node('docker') {
 
   stage ('Deploy mock-server') {
     def config = readFile 'kubernetes_dev.yml'
-    sh "BUILD_NUMBER=${buildNumber} && cat <<EOF | kubectl apply -f -\n${config}\nEOF"
+    sh "BUILD_NUMBER=${env.BUILD_NUMBER} && cat <<EOF | kubectl apply -f -\n${config}\nEOF"
   }
 }
