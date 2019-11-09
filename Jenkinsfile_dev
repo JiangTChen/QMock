@@ -4,9 +4,20 @@ node('docker') {
     checkout scm
   }
 
+  def mockImage
 
+  stage ('Build mock-server') {
+    mockImage = docker.build("qa-gov.cn.lab/mock-server:${env.BUILD_NUMBER}")
+  }
+
+  stage ('Upload image') {
+    docker.withRegistry('http://frank.lab:5000') {
+      mockImage.push()
+    }
+  }
 
   stage ('Deploy mock-server') {
-    sh "kubectl apply -f kubernetes_dev.yml"
+    def config = readFile 'kubernetes_dev.yml'
+    sh "BUILD_NUMBER=${buildNumber} && cat <<EOF | kubectl apply -f -\n${config}\nEOF"
   }
 }

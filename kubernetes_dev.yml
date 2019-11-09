@@ -85,7 +85,7 @@ spec:
     spec:
       containers:
       - name: mock-server
-        image: frank.lab:5000/mock-server:3
+        image: frank.lab:5000/mock-server:$BUILD_NUMBER
         env:
           - name: MOCK_CONFIG_MONGODB_SERVER
             value: mongodb
