@@ -30,11 +30,11 @@ spec:
             - containerPort: 8080
           resources:
             requests:
-              memory: "1Gi"
-              cpu: "500m"
-            limits:
               memory: "512Mi"
               cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
 ---
 kind: Deployment
 apiVersion: apps/v1
