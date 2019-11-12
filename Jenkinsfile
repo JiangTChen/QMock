@@ -22,7 +22,7 @@ node('docker') {
   }
 
   stage ('Upload image') {
-    docker.withRegistry('https://qa-gov.cn.lab', 'frank') {
+    docker.withRegistry('https://qa-gov.cn.lab', 'ElliotDuan') {
       mockImage.push()
     }
   }
