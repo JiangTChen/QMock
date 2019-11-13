@@ -28,7 +28,6 @@ cache_table_name = "cache"
 
 static_files_format_list = ['.html', '.css', '.js', 'ttf', 'jpg']
 default_header_dict = {
-    "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
     "Content-Type": "application/json;charset=UTF-8"
 }
 
