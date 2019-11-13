@@ -1,5 +1,5 @@
 from Object.singleton import Singleton
-from constant import DataParameter_1, DataExtraParameter_1, ExtraParameters
+from constant import ExtraParameters
 from utils.data_handler import is_url_matched_response, is_query_parameters_matched, is_body_patterns_matched
 from utils import global_utils
 from datetime import datetime

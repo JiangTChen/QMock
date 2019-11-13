@@ -1,11 +1,8 @@
-from constant import DataParameter_1 as DP
-from constant import DataExtraParameter_1 as DEP
 from constant import MockDataParameters as MDP
 from constant import MockDataParameterRequest as MDRq
 from constant import MockDataParameterResponse as MDRs
 from constant import MockDataExtra as MDEx
 from constant import MockDataExtraCallBack as MDECB
-from constant import ExtraParameters as EP
 
 import json
 

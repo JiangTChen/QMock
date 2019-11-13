@@ -1,7 +1,5 @@
 from enum import Enum
 
-HistoryTable = "-history-"
-
 
 class MockDataParameters:
     REQUEST = "request"
@@ -30,7 +28,7 @@ class MockDataExtra:
     STEP = "Step"
     TIMES = "Times"
     USER = "User"
-    ENCRYPT = "Encrypt"
+    # ENCRYPT = "Encrypt"
     LASTCALLTIME = "LastCallTime"
     MATCHING_RATE = 'MatchingRate'
     CALLBACK = "CallBack"
@@ -45,31 +43,6 @@ class MockDataExtraCallBack:
     TYPE = "Type"
 
 
-# column name for data
-class DataParameter_1:
-    RULE = "rule"
-    METHODS = "methods"
-    QUERY_PARAMETERS = "queryParameters"
-    BODY_PATTERNS = "bodyPatterns"
-    HEADERS = "headers"
-    CODE = "code"
-    VALUE = "value"
-
-
-# column name for extra
-class DataExtraParameter_1:
-    STATUS = "Status"
-    COMMENTS = "Comments"
-    DELAY = "Delay"
-    PERMANENT = "Permanent"
-    USER = "User"
-    DATE = 'Date'
-    OPERATION = 'Operation'
-    STEP = "Step"
-    TIMES = "Times"
-    LASTCALLTIME = "LastCallTime"
-
-
 # HTTP METHOD
 class HTTPMethod:
     GET = "GET"
@@ -78,23 +51,11 @@ class HTTPMethod:
     PUT = "PUT"
 
 
-# HttpMethods = Enum('HttpMethods', 'GET POST DELETE PUT')
-
-# GET = "GET"
-# POST = "POST"
-# DELETE = "DELETE"
-# PUT = "PUT"
-
-
 # DB
 class DatabaseName:
     DB_HCCN = "HCCN"
     DB_CAPPBE = "CAPPBE"
     DB_UTA = "UTA"
-
-
-# Filter
-# UnavailableStatus = ['FALSE', False, 'Duplicated']
 
 
 # Data source Type
@@ -140,6 +101,3 @@ class HashType:
 class CaseType:
     UPPER = "upper"
     LOWER = "lower"
-
-
-
