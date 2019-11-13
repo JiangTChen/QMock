@@ -346,7 +346,7 @@ def handle_variables_for_str_dict(body, req):
 def call_handle_variables_fun(value, req, key=None):
     # value is a string with variables or the variables
     func_name, args, orig_keyword = covert_variable_mockdatum(value)
-    obj_for_variable = getattr(handle_variables, func_name)
+    obj_for_variable = getattr(handle_variables, func_name.lower())
     # args.append(req)
     res = obj_for_variable(args, req=req, key=key)
     return res, orig_keyword

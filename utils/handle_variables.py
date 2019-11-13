@@ -3,7 +3,7 @@ import time, json, xmltodict
 from utils.global_utils import get_request_contents, is_json_str
 
 
-def from_request(args: list, **kwargs):
+def fromrequest(args: list, **kwargs):
     if args.__len__() > 0:
         keyword = args[0]
     else:
