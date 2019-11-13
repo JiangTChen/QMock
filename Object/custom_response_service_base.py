@@ -1,7 +1,5 @@
 from Object.singleton import Singleton
 
-from Object.mock_response import MockResponse
-
 
 class CustomResponsesServiceBase:
     __metaclass__ = Singleton
@@ -10,7 +8,7 @@ class CustomResponsesServiceBase:
         # print("No implement CustomResponsesServiceBase.__init__")
         pass
 
-    def add(self, response: MockResponse):
+    def add(self, response: dict):
         print("No implement CustomResponsesServiceBase.add")
 
     def remove(self, rule, methods, user=None):
