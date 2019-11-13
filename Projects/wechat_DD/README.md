@@ -1,5 +1,6 @@
 ## Wechat-DD
 ### Information:
+Ref Document:[https://pay.weixin.qq.com/wiki/doc/api/pap.php?chapter=18_3&index=8](https://pay.weixin.qq.com/wiki/doc/api/pap.php?chapter=18_3&index=8)
 DB Name: wechat-DD
 Url: http://qa-gov.cn.lab/mock/wechat-DD/{module_name}/{url}
 
