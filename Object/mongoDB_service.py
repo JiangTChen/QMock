@@ -1,15 +1,10 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
 from bson.objectid import ObjectId
 
 import pymongo
 import config
-from constant import *
 from Object.database_service_base import BaseDBService
 import utils.data_handler as data_handler
-
-
-# from constant import DataExtraParameter, HistoryTable
 
 
 class MongoDBService(BaseDBService):
@@ -42,15 +37,6 @@ class MongoDBService(BaseDBService):
         else:
             self._database = client_obj[database_name]
 
-    # def table(self, table_name=None, database=None):
-    #     if table_name is None:
-    #         return self._table
-    #     else:
-    #         if database is None:
-    #             self._table = self._database[table_name]
-    #         else:
-    #             self._table = database[table_name]
-    #         return self._table
 
     def get_available_contents_from(self, table_name):
         data = self.get_contents_from(table_name)
@@ -89,14 +75,6 @@ class MongoDBService(BaseDBService):
         my_query = {self.id_name: data_id}
         return table_name.delete_one(my_query)
 
-    def backup_old_data(self, origin_table_name, history_table_name, res_id, operation):
-        my_query = {self.id_name: res_id}
-        old_data = self.query(origin_table_name, my_query)[0]
-        old_data[DataExtraParameter_1.OPERATION] = operation
-        old_data[DataExtraParameter_1.DATE] = datetime.now()
-        del old_data[self.id_name]
-        inserted_id = self.insert(history_table_name, old_data).inserted_id
-        return old_data
 
 
 class DataClient:
