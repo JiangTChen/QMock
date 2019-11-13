@@ -125,9 +125,9 @@ class ExtraParameters:
 
 
 class VariablesInMockDatum:
-    FROM_REQUEST_PREFIX = "${from_request"
+    FROM_REQUEST_PREFIX = "${FromRequest"
     RANDOM_PREFIX = "${Random"
-    HASH_PREFIX = "${hash"
+    HASH_PREFIX = "${Hash"
     Remove = "${Remove}"
     Time = "${Now}"
 
