@@ -199,9 +199,9 @@ def send_request_with_specified_params(method, url, headers, body, delay):
     # body = json.dumps(body) if isinstance(body, dict) else body
     res = None
     if method == HTTPMethod.POST:
-        res = requests.post(url, data=body, json=body)
+        res = requests.post(url, data=body, json=body, headers=headers)
         # res = requests.request(method, url, headers=headers, json=body, data=body)
     elif method == HTTPMethod.GET:
-        res = requests.get(url, params=body)
+        res = requests.get(url, params=body, headers=headers)
     log.info("<--------Request:" + res.url)
     log.info("-------->response:" + res.content.decode())
