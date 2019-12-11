@@ -8,7 +8,7 @@ from flask import request
 
 import config
 from Object.database_service_base import BaseDBService
-from config import default_header_dict, data_package
+from config import data_package
 from global_vars import log
 import json
 import re
@@ -198,16 +198,17 @@ def remove_disable_datum(responses):
 #             return True
 #         else:
 #             return False
-def merge_headers(mock_datum: MockDatum):
-    if mock_datum.response.headers == {}:
-        return mock_datum.response.headers
-    header_dict = copy.deepcopy(default_header_dict)
-    if mock_datum.response.headers and mock_datum.response.headers != "":
-        mock_datum_headers = mock_datum.response.headers
-        mock_datum_headers = json.loads(mock_datum_headers) if isinstance(mock_datum_headers,
-                                                                          str) else mock_datum_headers
-        header_dict.update(mock_datum_headers)
-    return header_dict
+
+# def merge_headers(mock_datum: MockDatum):
+    # if mock_datum.response.headers == {}:
+    #     return mock_datum.response.headers
+    # header_dict = copy.deepcopy(default_header_dict)
+    # if mock_datum.response.headers and mock_datum.response.headers != "":
+    #     mock_datum_headers = mock_datum.response.headers
+    #     mock_datum_headers = json.loads(mock_datum_headers) if isinstance(mock_datum_headers,
+    #                                                                       str) else mock_datum_headers
+    #     header_dict.update(mock_datum_headers)
+    # return header_dict
 
 
 def replace_xml_for_random(xml_string, keyword, cdata=True):
@@ -245,7 +246,8 @@ def get_xml_tag_keyword(xml_string, key):
 
 
 def reassemble_response(mock_datum: MockDatum, req: request):
-    headers = merge_headers(mock_datum)
+    # headers = merge_headers(mock_datum)
+    headers = mock_datum.response.headers
     status = int(mock_datum.response.status if mock_datum.response.status else 200)
     body = mock_datum.response.body
     # body = replace_large_data(config.large_data_file_name, body)  # for execl resource
@@ -374,7 +376,7 @@ def covert_variable_mockdatum(variable: str):
 
 
 def get_content_type_from(headers):
-    if "Content-Type" in headers:
+    if headers and "Content-Type" in headers:
         return headers.get("Content-Type")
     else:
         return ""

@@ -151,7 +151,7 @@ def caches():
     # file: API_Docs/caches.yaml
     # """
     if request.method == HTTPMethod.GET:
-        return json.dumps(custom_response_service.json_obj), HTTPStatus.OK, config.default_header_dict
+        return json.dumps(custom_response_service.json_obj), HTTPStatus.OK, config.json_header_dict
     else:
         custom_response_service.clean()
         return "Dropped all custom responses", HTTPStatus.OK

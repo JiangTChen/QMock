@@ -27,7 +27,7 @@ cache_table_name = "cache"
 # data_path = base_path + "/Data/"
 
 static_files_format_list = ['.html', '.css', '.js', 'ttf', 'jpg']
-default_header_dict = {
+json_header_dict = {
     "Content-Type": "application/json;charset=UTF-8"
 }
 
