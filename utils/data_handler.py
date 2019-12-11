@@ -199,6 +199,8 @@ def remove_disable_datum(responses):
 #         else:
 #             return False
 def merge_headers(mock_datum: MockDatum):
+    if mock_datum.response.headers == {}:
+        return mock_datum.response.headers
     header_dict = copy.deepcopy(default_header_dict)
     if mock_datum.response.headers and mock_datum.response.headers != "":
         mock_datum_headers = mock_datum.response.headers
@@ -246,11 +248,14 @@ def reassemble_response(mock_datum: MockDatum, req: request):
     headers = merge_headers(mock_datum)
     status = int(mock_datum.response.status if mock_datum.response.status else 200)
     body = mock_datum.response.body
-    # body = replace_large_data(config.large_data_file_name, body)
-    if mock_datum.extra.callback:
+    # body = replace_large_data(config.large_data_file_name, body)  # for execl resource
+    if req.view_args.get("project_name") == config.Projects.wechat_DD and 'xml' in get_content_type_from(
+            mock_datum.response.headers):
+        body = gen_response_xml(mock_datum, req)
+
+    if mock_datum.extra.callback.url:
         req_temp = copy.copy(req)
         if req.view_args.get("project_name") == config.Projects.wechat_DD:
-            body = gen_response_xml(mock_datum, req)
             threading.Thread(target=send_pay_res_notify, args=(mock_datum, req_temp)).start()
             # executor.submit(wechat_dd_utils.send_callback(mock_datum, req))
         else:
@@ -304,7 +309,7 @@ def replace_large_data(file_name, value):
 
 
 def format_body_to_string(headers, value):
-    if 'json' in headers.get("Content-Type"):
+    if 'json' in get_content_type_from(headers):
         if isinstance(value, dict):
             body = json.dumps(value)
         elif global_utils.is_json_str(value):
@@ -366,3 +371,10 @@ def covert_variable_mockdatum(variable: str):
         fun_name = keywords
         args = []
     return fun_name, args, orig_keyword
+
+
+def get_content_type_from(headers):
+    if "Content-Type" in headers:
+        return headers.get("Content-Type")
+    else:
+        return ""
