@@ -13,6 +13,8 @@ import hashlib
 import hmac
 from constant import HashType, CaseType
 from global_vars import log
+import xmltodict
+from Object.mongoDB_service import MongoDBService
 
 
 def get_post_body_content(req: request):
@@ -29,6 +31,11 @@ def get_post_body_content(req: request):
     # get data
     if not body_content:
         data_body = req.data
+        try:
+            body_content = dict(xmltodict.parse(data_body)['xml'])
+        except:
+            pass
+    if not body_content:
         data_body_str = data_body.decode().strip().replace("\n", "").replace("\t", "")
         # convert the json string in data to json format
         if is_json_str(data_body_str):
@@ -176,6 +183,20 @@ def gen_random_string(types="letter+digits", size=16):
         return "".join(random.choices(string.digits, k=size))
 
 
+def get_db_table(database_name, table_name):
+    database_address = eval("config." + config.database_type + "_address")
+    db = eval(
+        config.data_service + "('" + database_address + "','" + database_name + "')")
+    return db.get_contents_from(table_name)
+
+
+def get_db_table_query(database_name, table_name, query: dict, query_filter=None):
+    database_address = eval("config." + config.database_type + "_address")
+    db = eval(
+        config.data_service + "('" + database_address + "','" + database_name + "')")
+    return db.query(table_name, query, query_filter)
+
+
 def gen_hash_str(data_str, types, key=None, case=""):
     case = case.lower()
     if types == HashType.MD5 and key is None:
@@ -205,3 +226,11 @@ def send_request_with_specified_params(method, url, headers, body, delay):
         res = requests.get(url, params=body, headers=headers)
     log.info("<--------Request:" + res.url)
     log.info("-------->response:" + res.content.decode())
+
+
+def handle_remove_for_dict(data: dict):
+    res_dict = {}
+    for key, value in data.items():
+        if value != VariablesInMockDatum.Remove:
+            res_dict[key] = value
+    return res_dict

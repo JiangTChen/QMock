@@ -27,7 +27,7 @@
 |   |  method | string/array  | http method  | GET or [GET,POST]  | No  | GET  |
 | |queryParameters|json/jsonString|query parameters of requests, support regular expression|{"personId":".*"}|No||
 | |bodyPatterns|json/jsonString|query parameters of requests, support regular expression|{"personId":".*"}|No||
-|response|headers|json/jsonString|headers of responses|{ "Content-Type": "application/xml"}|No| {"Content-Type": "application/json;charset=UTF-8"}|
+|response|headers|json/jsonString|headers of responses|{ "Content-Type": "application/xml"},{}  # empty header|No| {"Content-Type": "application/json;charset=UTF-8"}|
 | |code|int|http status|200|No|200|
 | |body|json/string|response body|"Hello"|No|""|
 |Extra|Disable|boolean|disable the data|True|No|False|

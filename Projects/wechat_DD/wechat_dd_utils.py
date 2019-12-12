@@ -1,3 +1,4 @@
+import json
 import time
 
 import xmltodict
@@ -6,42 +7,40 @@ import Projects.wechat_DD.constant
 import utils.global_utils as global_utils
 import requests
 from Object.mock_datum import MockDatum
-from constant import VariablesInMockDatum
+from constant import VariablesInMockDatum, CaseType, HashType
 import Projects.wechat_DD.config as wechat_dd_config
 import copy
 from Projects.wechat_DD.constant import ScsPayResNotifyReqParameters as ScReqP
 from Projects.wechat_DD.constant import PAPPayApplyReqParameters as PAPReqP
-from constant import CaseType, HashType
 # from utils.data_handler import covert_variable_mockdatum
+from utils import data_handler
 from utils.global_utils import send_request_with_specified_params
+import config
 
 
 def gen_response_xml(mock_datum: MockDatum, req: requests):
-    res_dict = {}
-    req_dict = xmltodict.parse(req.data)['xml']
-    for key, value in mock_datum.response.body.items():
-        if value.startswith(VariablesInMockDatum.FROM_REQUEST_PREFIX):
-            if value.find("(") > 0:
-                req_key = value[value.find("(") + 1:value.find(")")]
-                res_dict[key] = req_dict[req_key]
-            else:
-                res_dict[key] = req_dict[key]
-        elif value.startswith(VariablesInMockDatum.RANDOM_PREFIX):
-            if value.find("(") > 0:
-                types, size = value[value.find("(") + 1:value.find(")")].split(",")
-                res_dict[key] = global_utils.gen_random_string(types, size)
-            else:
-                res_dict[key] = global_utils.gen_random_string()
-        else:
-            res_dict[key] = value
+    res_dict = data_handler.handle_variables_for_str_dict(mock_datum.response.body, request=req)
     res_dict_sorted_list = sorted(res_dict.items())
-    stringA = compose_stringA(res_dict_sorted_list)
-    stringSignTemp = compose_stringSignTemp(stringA, wechat_dd_config.key)
-    sign = global_utils.gen_hash_str(stringSignTemp, HashType.MD5, case=CaseType.UPPER)
-    res_dict_sorted = dict(res_dict_sorted_list)
-    res_dict_sorted[Projects.wechat_DD.constant.sign] = sign
-    signed_xml = dict_to_xml(res_dict_sorted)
-    return signed_xml
+    if Projects.wechat_DD.constant.sign in res_dict and res_dict[
+        Projects.wechat_DD.constant.sign] == VariablesInMockDatum.Remove:
+        res_dict_sorted = dict(res_dict_sorted_list)
+        res_dict_sorted=global_utils.handle_remove_for_dict(res_dict_sorted)
+        return dict_to_xml(res_dict_sorted)
+    else:
+        stringA = compose_stringA(res_dict_sorted_list)
+        stringSignTemp = compose_stringSignTemp(stringA, wechat_dd_config.key)
+        sign = global_utils.gen_hash_str(stringSignTemp, HashType.MD5, case=CaseType.UPPER)
+        res_dict_sorted = dict(res_dict_sorted_list)
+        res_dict_sorted[Projects.wechat_DD.constant.sign] = sign
+        return dict_to_xml(res_dict_sorted)
+
+
+def get_err_code_for_dt(amount: str):
+    amount = int(float(amount))
+    group_id = amount % 4
+    database_address = eval("config." + config.database_type + "_address")
+    db = eval(
+        config.data_service + "('" + database_address + "','" + config.Projects.wechat_DD + "')")
 
 
 def dict_to_xml(res_dict_sorted, cdata=True, no_cdata=[]):
@@ -55,33 +54,11 @@ def dict_to_xml(res_dict_sorted, cdata=True, no_cdata=[]):
     return signed_xml
 
 
-def generate_signed_xml(xml_string, tag, keyword, key, cdata=True):
-    xml_dict = xmltodict.parse(xml_string)
-    xml_content = xml_dict["xml"]
-    xml_content.pop(tag)
-    xml_sorted_list = sorted(xml_content.items())
-    stringA = compose_stringA(xml_sorted_list)
-    stringSignTemp = stringA + "&key=" + key
-    keyword, types = keyword[2:-1].split("_")
-    sign = global_utils.gen_hash_str(stringSignTemp, types.lower(), key, CaseType.UPPER)
-    xml_sorted_list.append((tag, sign))
-    xml_sorted_list.sort()
-    xml_sorted_dict = dict(xml_sorted_list)
-    if cdata:
-        for key, value in xml_sorted_dict.items():
-            xml_sorted_dict[key] = "<![CDATA[" + value + "]]>"
-    signed_xml = xmltodict.unparse({"xml": xml_sorted_dict})
-    signed_xml = signed_xml.replace("&lt;", "<")
-    signed_xml = signed_xml.replace("&gt;", ">")
-    return signed_xml
-
-
 def compose_stringA(data_dict):
     content = ""
     for datum in data_dict:
         content += datum[0] + "=" + datum[1] + "&"
-    stringA = content[0:content.__len__() - 1]
-    return stringA
+    return content[0:content.__len__() - 1]
 
 
 def compose_stringSignTemp(stringA, key):
@@ -115,8 +92,9 @@ def gen_pay_res_notify_xml(mock_datum: MockDatum, req: requests):
             keyword, types, size = value[2:-1].split("_")
             res = global_utils.gen_random_string(types, size)
             res_dict[key] = res
-        elif value == VariablesInMockDatum.Remove:
-            pass
+        # handled in add custom parameters
+        # elif value == VariablesInMockDatum.Remove:
+        #     pass
         elif value == VariablesInMockDatum.Time:
             res_dict[key] = time.strftime('%Y%m%d%H%M%S', time.localtime())
         else:
@@ -175,9 +153,9 @@ xm = """<?xml version="1.0" encoding="UTF-8"?>
     </appid>
 </xml>"""
 
-if __name__ == '__main__':
-    signed_xml = generate_signed_xml(xm, "123")
-    print(signed_xml)
+# if __name__ == '__main__':
+#     signed_xml = generate_signed_xml(xm, "123")
+#     print(signed_xml)
 
 # xmo = xmltodict.parse(xm)
 # xmo_content = xmo["xml"]

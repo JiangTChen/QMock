@@ -91,6 +91,7 @@ class VariablesInMockDatum:
     HASH_PREFIX = "${Hash"
     Remove = "${Remove}"
     Time = "${Now}"
+    DB_PREFIX = "${DB"
 
 
 class HashType:

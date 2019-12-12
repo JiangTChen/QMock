@@ -200,15 +200,15 @@ def remove_disable_datum(responses):
 #             return False
 
 # def merge_headers(mock_datum: MockDatum):
-    # if mock_datum.response.headers == {}:
-    #     return mock_datum.response.headers
-    # header_dict = copy.deepcopy(default_header_dict)
-    # if mock_datum.response.headers and mock_datum.response.headers != "":
-    #     mock_datum_headers = mock_datum.response.headers
-    #     mock_datum_headers = json.loads(mock_datum_headers) if isinstance(mock_datum_headers,
-    #                                                                       str) else mock_datum_headers
-    #     header_dict.update(mock_datum_headers)
-    # return header_dict
+# if mock_datum.response.headers == {}:
+#     return mock_datum.response.headers
+# header_dict = copy.deepcopy(default_header_dict)
+# if mock_datum.response.headers and mock_datum.response.headers != "":
+#     mock_datum_headers = mock_datum.response.headers
+#     mock_datum_headers = json.loads(mock_datum_headers) if isinstance(mock_datum_headers,
+#                                                                       str) else mock_datum_headers
+#     header_dict.update(mock_datum_headers)
+# return header_dict
 
 
 def replace_xml_for_random(xml_string, keyword, cdata=True):
@@ -265,7 +265,7 @@ def reassemble_response(mock_datum: MockDatum, req: request):
             threading.Thread(target=send_callback, args=(mock_datum, req_temp)).start()
 
     body = format_body_to_string(headers, body)
-    body = handle_variables_for_str_dict(body, req)
+    body = handle_variables_for_str_dict(body, request=req)
     body = body if body else ''
     return body, headers, status
 
@@ -332,38 +332,41 @@ def send_callback(mock_datum: MockDatum, req: request):
     headers = mock_datum.extra.callback.headers
     body = mock_datum.extra.callback.body
     body = json.loads(body) if is_json_str(body) else body
-    body = handle_variables_for_str_dict(body, req)
+    body = handle_variables_for_str_dict(body, request=req)
     delay = int(mock_datum.extra.callback.delay)
     send_request_with_specified_params(method, url, headers, body, delay)
 
 
-def handle_variables_for_str_dict(body, req):
+def handle_variables_for_str_dict(body, **kwargs):
+    res_body = copy.deepcopy(body)
     if isinstance(body, dict):
         for key, value in body.items():
-            if value.startswith("${"):
-                res, orig_keyword = call_handle_variables_fun(value, req, key=key)
-                body[key] = res
+            if value.startswith("${") and not value.startswith(VariablesInMockDatum.Remove):
+                kwargs['key'] = key
+                res, orig_keyword = call_handle_variables_fun(value, **kwargs)
+                res_body[key] = res
     elif isinstance(body, str):
         while body.find("${") >= 0:
-            res, orig_keyword = call_handle_variables_fun(body, req)
-            body = body.replace(orig_keyword, res, 1)
-    return body
+            res, orig_keyword = call_handle_variables_fun(body, **kwargs)
+            res_body = body.replace(orig_keyword, res, 1)
+    return res_body
 
 
-def call_handle_variables_fun(value, req, key=None):
+def call_handle_variables_fun(value, **kwargs):
     # value is a string with variables or the variables
     func_name, args, orig_keyword = covert_variable_mockdatum(value)
     obj_for_variable = getattr(handle_variables, func_name.lower())
     # args.append(req)
-    res = obj_for_variable(args, req=req, key=key)
+    res = obj_for_variable(args, **kwargs)
     return res, orig_keyword
 
 
 def covert_variable_mockdatum(variable: str):
     start = variable.find("${")
-    end = variable.find("}", start)
+    end = variable.rfind("}", start)
     orig_keyword = variable[start:end + 1]
-    orig_keyword = orig_keyword.replace("'", "").replace('"', "")
+    # annotation for support dict
+    # orig_keyword = orig_keyword.replace("'", "").replace('"', "")
     keywords = orig_keyword[2:- 1]
     split_pos = keywords.find("(")
     if split_pos > 0:

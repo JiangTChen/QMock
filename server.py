@@ -1,6 +1,8 @@
 from flask import Flask, request, redirect
 
 import json
+
+import Projects.wechat_DD.config
 from utils import data_handler
 from utils import global_utils
 # import utils.utils as utils
@@ -112,6 +114,8 @@ def db_access(project_name, module_name, url):
         else:
             mock_datum = data[0]  # No steps datum
         body, headers, status = reassemble_response(mock_datum, request)
+        if isinstance(body, dict):
+            body = global_utils.handle_remove_for_dict(body)
         global_utils.delay_for_response(mock_datum)
         log.info('<----- Response Body:' + str(body))
         return body, status, headers
@@ -155,6 +159,15 @@ def caches():
     else:
         custom_response_service.clean()
         return "Dropped all custom responses", HTTPStatus.OK
+
+
+@app.route(config.site_base_url + "/OT", methods=[HTTPMethod.GET, HTTPMethod.POST])
+def ot_status():
+    if request.args.get('status') == 'True':
+        Projects.wechat_DD.config.dt_status = True
+    else:
+        Projects.wechat_DD.config.dt_status = False
+    return "ot_status is " + str(Projects.wechat_DD.config.dt_status), HTTPStatus.OK
 
 
 # app.run(host=IP, port=80, debug=config.debug)

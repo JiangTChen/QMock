@@ -1,14 +1,15 @@
 from utils import global_utils
 import time, json, xmltodict
-from utils.global_utils import get_request_contents, is_json_str
+from utils.global_utils import get_request_contents, is_json_str, get_db_table_query
+from random import choice
 
 
-def fromrequest(args: list, **kwargs):
-    if args.__len__() > 0:
-        keyword = args[0]
+def fromrequest(arg: list, **kwargs):
+    if arg.__len__() > 0:
+        keyword = arg[0]
     else:
         keyword = kwargs.get("key")
-    req = kwargs.get("req")
+    req = kwargs.get("request")
     contents = get_request_contents(req)
     if contents.get("json"):
         contents = contents.get("json")
@@ -39,6 +40,26 @@ def now(args: list, **kwargs):
     else:
         time_format = '%Y%m%d%H%M%S'
     return time.strftime(time_format, time.localtime())
+
+
+def db(args: list, **kwargs):
+    while args.__len__() < 5:
+        args.append(None)
+    db_name, table_name, query, key, number = args
+    if global_utils.is_json_str(query):
+        query = json.loads(query)
+    else:
+        query = {}
+    res = list(global_utils.get_db_table_query(db_name, table_name, query, {"_id": 0}))
+    if key is not None:
+        res = res[0][key]
+        if number is not None:
+            if isinstance(res, list):
+                if number == '?':
+                    res = choice(res)
+                else:
+                    res = res[int(number)]
+    return res
 
 # def
 #     FROM_REQUEST = "${from_request}"

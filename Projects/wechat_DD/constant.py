@@ -96,3 +96,4 @@ class CallBackType:
 
 
 sign = "sign"
+err_code = "err_code"

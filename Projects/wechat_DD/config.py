@@ -39,4 +39,4 @@ success_pay_notify_default_data = {
     ScsPayResNotifyReqParameters.time_end: "${Now}"
 }
 
-
+dt_status = False
