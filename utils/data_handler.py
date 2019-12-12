@@ -327,7 +327,7 @@ def send_callback(mock_datum: MockDatum, req: request):
     method = mock_datum.extra.callback.method
     url = mock_datum.extra.callback.url
     if url.startswith(VariablesInMockDatum.FROM_REQUEST_PREFIX):
-        res, orig_keyword = call_handle_variables_fun(url, req)
+        res, orig_keyword = call_handle_variables_fun(url, request=req)
         url = res
     headers = mock_datum.extra.callback.headers
     body = mock_datum.extra.callback.body
