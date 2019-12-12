@@ -341,7 +341,7 @@ def handle_variables_for_str_dict(body, **kwargs):
     res_body = copy.deepcopy(body)
     if isinstance(body, dict):
         for key, value in body.items():
-            if value.startswith("${") and not value.startswith(VariablesInMockDatum.Remove):
+            if isinstance(value, str) and value.startswith("${") and not value.startswith(VariablesInMockDatum.Remove):
                 kwargs['key'] = key
                 res, orig_keyword = call_handle_variables_fun(value, **kwargs)
                 res_body[key] = res
