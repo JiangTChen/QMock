@@ -1,7 +1,7 @@
 from flask import Flask, request, redirect
 
 import json
-
+import xmltodict
 import Projects.wechat_DD.config
 from utils import data_handler
 from utils import global_utils
@@ -116,6 +116,8 @@ def db_access(project_name, module_name, url):
         body, headers, status = reassemble_response(mock_datum, request)
         if isinstance(body, dict):
             body = global_utils.handle_remove_for_dict(body)
+            if 'Content-Type' in headers and 'xml' in headers.get('Content-Type'):
+                body = global_utils.dict_to_xml(body, cdata=False)
         global_utils.delay_for_response(mock_datum)
         log.info('<----- Response Body:' + str(body))
         return body, status, headers

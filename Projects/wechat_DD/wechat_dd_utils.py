@@ -1,4 +1,3 @@
-import json
 import time
 
 import xmltodict
@@ -14,7 +13,7 @@ from Projects.wechat_DD.constant import ScsPayResNotifyReqParameters as ScReqP
 from Projects.wechat_DD.constant import PAPPayApplyReqParameters as PAPReqP
 # from utils.data_handler import covert_variable_mockdatum
 from utils import data_handler
-from utils.global_utils import send_request_with_specified_params
+from utils.global_utils import send_request_with_specified_params, dict_to_xml
 import config
 
 
@@ -41,17 +40,6 @@ def get_err_code_for_dt(amount: str):
     database_address = eval("config." + config.database_type + "_address")
     db = eval(
         config.data_service + "('" + database_address + "','" + config.Projects.wechat_DD + "')")
-
-
-def dict_to_xml(res_dict_sorted, cdata=True, no_cdata=[]):
-    if cdata:
-        for key, value in res_dict_sorted.items():
-            if key not in no_cdata:
-                res_dict_sorted[key] = "<![CDATA[" + value + "]]>"
-    signed_xml = xmltodict.unparse({"xml": res_dict_sorted})
-    signed_xml = signed_xml.replace("&lt;", "<")
-    signed_xml = signed_xml.replace("&gt;", ">")
-    return signed_xml
 
 
 def compose_stringA(data_dict):

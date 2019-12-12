@@ -234,3 +234,14 @@ def handle_remove_for_dict(data: dict):
         if value != VariablesInMockDatum.Remove:
             res_dict[key] = value
     return res_dict
+
+
+def dict_to_xml(res_dict_sorted, cdata=True, no_cdata=[]):
+    if cdata:
+        for key, value in res_dict_sorted.items():
+            if key not in no_cdata:
+                res_dict_sorted[key] = "<![CDATA[" + value + "]]>"
+    signed_xml = xmltodict.unparse({"xml": res_dict_sorted})
+    signed_xml = signed_xml.replace("&lt;", "<")
+    signed_xml = signed_xml.replace("&gt;", ">")
+    return signed_xml
