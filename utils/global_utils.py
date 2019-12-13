@@ -17,7 +17,7 @@ import xmltodict
 from Object.mongoDB_service import MongoDBService
 
 
-def get_post_body_content(req: request):
+def get_post_body_content(req: request, xml2json=True):
     # get raw in json
     try:
         body_content = req.json
@@ -29,8 +29,8 @@ def get_post_body_content(req: request):
         if len(form_body) != 0:
             body_content = form_body
     # get data
-    if not body_content:
-        data_body = req.data
+    data_body = req.data
+    if not body_content and xml2json:
         try:
             body_content = dict(xmltodict.parse(data_body)['xml'])
         except:
@@ -224,8 +224,8 @@ def send_request_with_specified_params(method, url, headers, body, delay):
         # res = requests.request(method, url, headers=headers, json=body, data=body)
     elif method == HTTPMethod.GET:
         res = requests.get(url, params=body, headers=headers)
-    log.info("<--------Request:" + res.url)
-    log.info("-------->response:" + res.content.decode())
+    log.info("<--------Send Request:" + res.url)
+    log.info("-------->Send Request Content:" + res.content.decode())
 
 
 def handle_remove_for_dict(data: dict):

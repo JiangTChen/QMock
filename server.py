@@ -46,7 +46,7 @@ def get():
 
 @app.route(config.site_base_url + '/', methods=['POST'])
 def post():
-    request_body = global_utils.get_post_body_content(request)
+    request_body = global_utils.get_post_body_content(request,xml2json=False)
     # request_body=json.dumps(global_utils.get_request_contents(request))
     log.info("-----> Request Url:" + request.url)
     if isinstance(request_body, dict):

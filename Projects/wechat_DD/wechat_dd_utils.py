@@ -23,7 +23,7 @@ def gen_response_xml(mock_datum: MockDatum, req: requests):
     if Projects.wechat_DD.constant.sign in res_dict and res_dict[
         Projects.wechat_DD.constant.sign] == VariablesInMockDatum.Remove:
         res_dict_sorted = dict(res_dict_sorted_list)
-        res_dict_sorted=global_utils.handle_remove_for_dict(res_dict_sorted)
+        res_dict_sorted = global_utils.handle_remove_for_dict(res_dict_sorted)
         return dict_to_xml(res_dict_sorted)
     else:
         stringA = compose_stringA(res_dict_sorted_list)
@@ -74,20 +74,7 @@ def gen_pay_res_notify_xml(mock_datum: MockDatum, req: requests):
             message_dict.pop(key)
         else:
             message_dict[key] = value
-    res_dict = {}
-    for key, value in message_dict.items():
-        if value.startswith(VariablesInMockDatum.RANDOM_PREFIX):
-            keyword, types, size = value[2:-1].split("_")
-            res = global_utils.gen_random_string(types, size)
-            res_dict[key] = res
-        # handled in add custom parameters
-        # elif value == VariablesInMockDatum.Remove:
-        #     pass
-        elif value == VariablesInMockDatum.Time:
-            res_dict[key] = time.strftime('%Y%m%d%H%M%S', time.localtime())
-        else:
-            res_dict[key] = value
-
+    res_dict = data_handler.handle_variables_for_str_dict(message_dict)
     sorted_res_list = sorted(res_dict.items())
     stringA = compose_stringA(sorted_res_list)
     stringSignTemp = compose_stringSignTemp(stringA, wechat_dd_config.key)
