@@ -51,14 +51,17 @@ def db(args: list, **kwargs):
     else:
         query = {}
     res = list(global_utils.get_db_table_query(db_name, table_name, query, {"_id": 0}))
-    if key is not None:
-        res = res[0][key]
-        if number is not None:
-            if isinstance(res, list):
-                if number == '?':
-                    res = choice(res)
-                else:
-                    res = res[int(number)]
+    if res:
+        if key is not None:
+            res = res[0][key]
+            if number is not None:
+                if isinstance(res, list):
+                    if number == '?':
+                        res = choice(res)
+                    else:
+                        res = res[int(number)]
+    else:
+        return "No data for ${DB("+",".join(args)+")}"
     return res
 
 # def

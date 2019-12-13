@@ -11,7 +11,7 @@ from Object.database_service_base import BaseDBService
 from config import data_package
 from global_vars import log
 import json
-import re
+import re, time
 from constant import MockDataParameters as MDPa
 from constant import MockDataExtra as MDEx
 from constant import HTTPMethod
@@ -365,13 +365,24 @@ def covert_variable_mockdatum(variable: str):
     start = variable.find("${")
     end = variable.rfind("}", start)
     orig_keyword = variable[start:end + 1]
-    # annotation for support dict
-    # orig_keyword = orig_keyword.replace("'", "").replace('"', "")
     keywords = orig_keyword[2:- 1]
+    dict_list = re.findall(r"{.*?}", keywords)
+    replaced_dict = {}
+    i = 0
+    temp_str = time.time()
+    for dict_str in dict_list:
+        tmp_str = str(temp_str) + "_" + str(i)
+        keywords = keywords.replace(dict_str, tmp_str)
+        i += 1
+        replaced_dict[tmp_str] = dict_str
     split_pos = keywords.find("(")
     if split_pos > 0:
         fun_name = keywords[:split_pos]
         args = keywords[split_pos + 1:-1].split(",")
+        if replaced_dict:
+            for arg in args:
+                if arg in replaced_dict:
+                    args[args.index(arg)] = replaced_dict[arg]
     else:
         fun_name = keywords
         args = []
