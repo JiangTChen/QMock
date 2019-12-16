@@ -1,7 +1,9 @@
+from Object.mock_exception import DBLookupError
 from utils import global_utils
 import time, json, xmltodict
 from utils.global_utils import get_request_contents, is_json_str, get_db_table_query
 from random import choice
+from http import HTTPStatus
 
 
 def fromrequest(arg: list, **kwargs):
@@ -61,7 +63,7 @@ def db(args: list, **kwargs):
                     else:
                         res = res[int(number)]
     else:
-        return "No data for ${DB("+",".join(args)+")}"
+        raise DBLookupError("No data for ${DB(" + ",".join(args) + ")}", HTTPStatus.INTERNAL_SERVER_ERROR)
     return res
 
 # def

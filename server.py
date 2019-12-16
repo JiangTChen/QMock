@@ -3,6 +3,7 @@ from flask import Flask, request, redirect
 import json
 import xmltodict
 import Projects.wechat_DD.config
+from Object.mock_exception import DBLookupError
 from utils import data_handler
 from utils import global_utils
 # import utils.utils as utils
@@ -46,7 +47,7 @@ def get():
 
 @app.route(config.site_base_url + '/', methods=['POST'])
 def post():
-    request_body = global_utils.get_post_body_content(request,xml2json=False)
+    request_body = global_utils.get_post_body_content(request, xml2json=False)
     # request_body=json.dumps(global_utils.get_request_contents(request))
     log.info("-----> Request Url:" + request.url)
     if isinstance(request_body, dict):
@@ -59,68 +60,77 @@ def post():
 @app.route(config.site_base_url + '/<project_name>/<module_name>/<path:url>',
            methods=['POST', 'GET', 'PUT', 'DELETE'])
 def db_access(project_name, module_name, url):
-    log.info('-----> Request Url:' + request.url + ' ')
-    database_name = project_name
-    table_name = module_name
-    if global_utils.is_static_file(url):
-        return app.send_static_file(project_name + "/" + module_name + "/" + url)
-    else:
-        db = eval(
-            config.data_service + "('" + database_address + "','" + database_name + "')")
-        data = steps_pool.get_data(request, table_name)
-        log.debug("steps_pool:" + str(data))
-        if not data:  # No steps_pool
-            data = custom_response_service.get_data(request)
-            log.debug("custom_response:" + str(data))
-            if not data:
-                data = data_handler.get_data_for_request(db, table_name, request)
-                log.debug("DB_MockData:" + str(data))
-            parameters = global_utils.get_request_contents(request)
-            # print('url:' + url + " para:", parameters)
-            while data.__len__() < 1:  # debug for not found
+    try:
+        log.info('-----> Request Url:' + request.url + ' ')
+        database_name = project_name
+        table_name = module_name
+        if global_utils.is_static_file(url):
+            return app.send_static_file(project_name + "/" + module_name + "/" + url)
+        else:
+            db = eval(
+                config.data_service + "('" + database_address + "','" + database_name + "')")
+            data = steps_pool.get_data(request, table_name)
+            log.debug("steps_pool:" + str(data))
+            if not data:  # No steps_pool
+                data = custom_response_service.get_data(request)
+                log.debug("custom_response:" + str(data))
+                if not data:
+                    data = data_handler.get_data_for_request(db, table_name, request)
+                    log.debug("DB_MockData:" + str(data))
+                parameters = global_utils.get_request_contents(request)
+                # print('url:' + url + " para:", parameters)
+                while data.__len__() < 1:  # debug for not found
+                    info = str(
+                        data.__len__()) + " Response here, please check database:" + database_name + " table:" + table_name + " rule:" + url + '\n' + request.method + ':' + request.url + '\n' + 'Body:' + json.dumps(
+                        parameters)
+                    log.debug(info)
+                    # Retry
+                    if config.debug:
+                        # return info, HTTPStatus.NOT_FOUND
+                        data = data_handler.get_data_for_request(db, table_name, request)
+                    else:
+                        return info, HTTPStatus.NOT_FOUND
+                # if data.__len__() > 1:
                 info = str(
                     data.__len__()) + " Response here, please check database:" + database_name + " table:" + table_name + " rule:" + url + '\n' + request.method + ':' + request.url + '\n' + 'Body:' + json.dumps(
                     parameters)
                 log.debug(info)
-                # Retry
-                if config.debug:
-                    # return info, HTTPStatus.NOT_FOUND
-                    data = data_handler.get_data_for_request(db, table_name, request)
-                else:
-                    return info, HTTPStatus.NOT_FOUND
-            # if data.__len__() > 1:
-            info = str(
-                data.__len__()) + " Response here, please check database:" + database_name + " table:" + table_name + " rule:" + url + '\n' + request.method + ':' + request.url + '\n' + 'Body:' + json.dumps(
-                parameters)
-            log.debug(info)
-            # append datum to steps_pool during steps_pool doesn't has matched data
+                # append datum to steps_pool during steps_pool doesn't has matched data
+                for mock_datum in data:
+                    if mock_datum.extra.step:
+                        steps_pool.append(mock_datum)
+
+            step_data = []  # filtered datum with step from data(steps_pool,custom_response,data)
             for mock_datum in data:
                 if mock_datum.extra.step:
-                    steps_pool.append(mock_datum)
-
-        step_data = []  # filtered datum with step from data(steps_pool,custom_response,data)
-        for mock_datum in data:
-            if mock_datum.extra.step:
-                step_data.append(mock_datum)
-        if step_data.__len__() > 0:
-            data = sorted(step_data, key=lambda one_mock_datum: one_mock_datum.extra.step, reverse=True)
-            mock_datum = data.pop()
-            # if steps_pool.pool.__len__()>0:
-            index = steps_pool.pool.index(mock_datum)
-            if config.cache_step_time > 0:
-                steps_pool.pool[index].extra.last_call_time = datetime.now()
+                    step_data.append(mock_datum)
+            if step_data.__len__() > 0:
+                data = sorted(step_data, key=lambda one_mock_datum: one_mock_datum.extra.step, reverse=True)
+                mock_datum = data.pop()
+                # if steps_pool.pool.__len__()>0:
+                index = steps_pool.pool.index(mock_datum)
+                if config.cache_step_time > 0:
+                    steps_pool.pool[index].extra.last_call_time = datetime.now()
+                else:
+                    steps_pool.pool[index].extra.times -= 1
             else:
-                steps_pool.pool[index].extra.times -= 1
-        else:
-            mock_datum = data[0]  # No steps datum
-        body, headers, status = reassemble_response(mock_datum, request)
-        if isinstance(body, dict):
-            body = global_utils.handle_remove_for_dict(body)
-            if headers and 'Content-Type' in headers and 'xml' in headers.get('Content-Type'):
-                body = global_utils.dict_to_xml(body, cdata=False)
-        global_utils.delay_for_response(mock_datum)
-        log.info('<----- Response Body:' + str(body))
-        return body, status, headers
+                mock_datum = data[0]  # No steps datum
+            body, headers, status = reassemble_response(mock_datum, request)
+            if isinstance(body, dict):
+                body = global_utils.handle_remove_for_dict(body)
+                if headers and 'Content-Type' in headers and 'xml' in headers.get('Content-Type'):
+                    body = global_utils.dict_to_xml(body, cdata=False)
+                    global_utils.delay_for_response(mock_datum)
+                    log.info('<----- Response Body:' + str(body))
+    except DBLookupError as e:
+        body = e.args[0]
+        status = e.args[1]
+        headers = {}
+    except Exception as e:
+        body = str(e)
+        status = HTTPStatus.INTERNAL_SERVER_ERROR
+        headers = {}
+    return body, status, headers
 
 
 @app.route(config.site_base_url + "/cache", methods=[HTTPMethod.POST, HTTPMethod.DELETE])
