@@ -120,8 +120,8 @@ def db_access(project_name, module_name, url):
                 body = global_utils.handle_remove_for_dict(body)
                 if headers and 'Content-Type' in headers and 'xml' in headers.get('Content-Type'):
                     body = global_utils.dict_to_xml(body, cdata=False)
-                    global_utils.delay_for_response(mock_datum)
-                    log.info('<----- Response Body:' + str(body))
+            global_utils.delay_for_response(mock_datum)
+            log.info('<----- Response Body:' + str(body))
     except DBLookupError as e:
         body = e.args[0]
         status = e.args[1]
