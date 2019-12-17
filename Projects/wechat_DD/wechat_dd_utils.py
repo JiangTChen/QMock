@@ -89,7 +89,7 @@ def send_pay_res_notify(mock_datum: MockDatum, req: requests):
     body = gen_pay_res_notify_xml(mock_datum, req)
     method = mock_datum.extra.callback.method
     headers = mock_datum.extra.callback.headers
-    delay = int(mock_datum.extra.callback.delay)
+    delay = int(mock_datum.extra.callback.delay) if mock_datum.extra.callback.delay else 0
     if mock_datum.extra.callback.url.startswith(VariablesInMockDatum.FROM_REQUEST_PREFIX):
         url = xmltodict.parse(req.data)['xml'][PAPReqP.notify_url]
     else:
