@@ -225,7 +225,7 @@ def send_request_with_specified_params(method, url, headers, body, delay):
     elif method == HTTPMethod.GET:
         res = requests.get(url, params=body, headers=headers)
     log.info("<--------Send Request:" + res.url)
-    log.info("-------->Send Request Content:" + res.content.decode())
+    log.info("<--------Send Request Content:" + res.content.decode())
 
 
 def handle_remove_for_dict(data: dict):
