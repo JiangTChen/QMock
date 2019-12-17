@@ -24,14 +24,14 @@ def gen_response_xml(mock_datum: MockDatum, req: requests):
         Projects.wechat_DD.constant.sign] == VariablesInMockDatum.Remove:
         res_dict_sorted = dict(res_dict_sorted_list)
         res_dict_sorted = global_utils.handle_remove_for_dict(res_dict_sorted)
-        return dict_to_xml(res_dict_sorted)
+        return dict_to_xml(res_dict_sorted, xml_statement=False)
     else:
         stringA = compose_stringA(res_dict_sorted_list)
         stringSignTemp = compose_stringSignTemp(stringA, wechat_dd_config.key)
         sign = global_utils.gen_hash_str(stringSignTemp, HashType.MD5, case=CaseType.UPPER)
         res_dict_sorted = dict(res_dict_sorted_list)
         res_dict_sorted[Projects.wechat_DD.constant.sign] = sign
-        return dict_to_xml(res_dict_sorted)
+        return dict_to_xml(res_dict_sorted, xml_statement=False)
 
 
 def get_err_code_for_dt(amount: str):
@@ -81,7 +81,7 @@ def gen_pay_res_notify_xml(mock_datum: MockDatum, req: requests):
     sign = global_utils.gen_hash_str(stringSignTemp, HashType.MD5)
     sorted_res_dict = dict(sorted_res_list)
     sorted_res_dict[ScReqP.sign] = sign
-    res_xml = dict_to_xml(sorted_res_dict, no_cdata=[ScReqP.total_fee])
+    res_xml = dict_to_xml(sorted_res_dict, xml_statement=False, no_cdata=[ScReqP.total_fee])
     return res_xml
 
 

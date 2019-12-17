@@ -236,7 +236,7 @@ def handle_remove_for_dict(data: dict):
     return res_dict
 
 
-def dict_to_xml(res_dict_sorted, cdata=True, no_cdata=[]):
+def dict_to_xml(res_dict_sorted, cdata=True, xml_statement=True, no_cdata=[]):
     if cdata:
         for key, value in res_dict_sorted.items():
             if key not in no_cdata:
@@ -244,4 +244,8 @@ def dict_to_xml(res_dict_sorted, cdata=True, no_cdata=[]):
     signed_xml = xmltodict.unparse({"xml": res_dict_sorted})
     signed_xml = signed_xml.replace("&lt;", "<")
     signed_xml = signed_xml.replace("&gt;", ">")
-    return signed_xml
+    if xml_statement:
+        return signed_xml
+    else:
+        return signed_xml[signed_xml.find('<xml>'):]
+

@@ -21,7 +21,7 @@ def fromrequest(arg: list, **kwargs):
         return contents[keyword]
     elif is_json_str(contents):
         return json.loads(contents)[keyword]
-    elif isinstance(contents, str) and contents.startswith("<?xml"):
+    elif isinstance(contents, str) and contents.endswith("</xml>"):
         return xmltodict.parse(contents)["xml"][keyword]
     else:
         return ""
