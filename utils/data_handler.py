@@ -333,7 +333,7 @@ def send_callback(mock_datum: MockDatum, req: request):
     body = mock_datum.extra.callback.body
     body = json.loads(body) if is_json_str(body) else body
     body = handle_variables_for_str_dict(body, request=req)
-    delay = int(mock_datum.extra.callback.delay)
+    delay = int(mock_datum.extra.callback.delay) if mock_datum.extra.callback.delay else 0
     send_request_with_specified_params(method, url, headers, body, delay)
 
 
