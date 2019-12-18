@@ -15,6 +15,7 @@ from Projects.wechat_DD.constant import PAPPayApplyReqParameters as PAPReqP
 from utils import data_handler
 from utils.global_utils import send_request_with_specified_params, dict_to_xml
 import config
+from global_vars import log
 
 
 def gen_response_xml(mock_datum: MockDatum, req: requests):
@@ -46,11 +47,15 @@ def compose_stringA(data_dict):
     content = ""
     for datum in data_dict:
         content += datum[0] + "=" + datum[1] + "&"
-    return content[0:content.__len__() - 1]
+    content = content[0:content.__len__() - 1]
+    # log.info("StringA:" + content)
+    return content
 
 
 def compose_stringSignTemp(stringA, key):
-    return stringA + "&key=" + key
+    join_key = stringA + "&key=" + key
+    # log.info("StringA&Key:" + join_key)
+    return join_key
 
 
 def gen_pay_res_notify_xml(mock_datum: MockDatum, req: requests):
@@ -78,7 +83,7 @@ def gen_pay_res_notify_xml(mock_datum: MockDatum, req: requests):
     sorted_res_list = sorted(res_dict.items())
     stringA = compose_stringA(sorted_res_list)
     stringSignTemp = compose_stringSignTemp(stringA, wechat_dd_config.key)
-    sign = global_utils.gen_hash_str(stringSignTemp, HashType.MD5)
+    sign = global_utils.gen_hash_str(stringSignTemp, HashType.MD5, case=CaseType.UPPER)
     sorted_res_dict = dict(sorted_res_list)
     sorted_res_dict[ScReqP.sign] = sign
     res_xml = dict_to_xml(sorted_res_dict, xml_statement=False, no_cdata=[ScReqP.total_fee])
