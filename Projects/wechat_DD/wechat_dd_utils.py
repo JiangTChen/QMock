@@ -74,7 +74,7 @@ def gen_pay_res_notify_xml(mock_datum: MockDatum, req: requests):
             message_dict.pop(key)
         else:
             message_dict[key] = value
-    res_dict = data_handler.handle_variables_for_str_dict(message_dict)
+    res_dict = data_handler.handle_variables_for_str_dict(message_dict, request=req)
     sorted_res_list = sorted(res_dict.items())
     stringA = compose_stringA(sorted_res_list)
     stringSignTemp = compose_stringSignTemp(stringA, wechat_dd_config.key)
