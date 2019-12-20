@@ -31,10 +31,11 @@ spec:
           resources:
             requests:
               memory: "512Mi"
-              cpu: "200m"
+              cpu: "300m"
             limits:
-              memory: "1Gi"
-              cpu: "500m"
+              memory: "512Mi"
+              cpu: "300m"
+              # wechat-dd memory max=70 cpu max=1200, requests cpu recommend 1500
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -62,10 +63,11 @@ spec:
           resources:
             requests:
               memory: "1Gi"
-              cpu: "100m"
+              cpu: "300m"
             limits:
               memory: "1Gi"
-              cpu: "100m"
+              cpu: "300m"
+              #wechat-dd memory max=210 cpu max=180
           # volumeMounts:
           #   - name: ura-mongo-volume
           #     mountPath: /data/db
