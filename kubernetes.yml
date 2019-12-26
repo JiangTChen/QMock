@@ -68,13 +68,13 @@ spec:
               memory: "1Gi"
               cpu: "300m"
               #wechat-dd memory max=210 cpu max=180
-          # volumeMounts:
-          #   - name: ura-mongo-volume
-          #     mountPath: /data/db
-      # volumes:
-      #   - name: ura-mongo-volume
-      #     persistentVolumeClaim:
-      #       claimName: mongo-data
+          volumeMounts:
+            - name: mock-mongo-volume
+              mountPath: /data/db
+      volumes:
+        - name: mock-mongo-volume
+          persistentVolumeClaim:
+            claimName: mongodb
 ---
 kind: Deployment
 apiVersion: apps/v1
