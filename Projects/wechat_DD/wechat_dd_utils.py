@@ -90,6 +90,7 @@ def gen_pay_res_notify_xml(mock_datum: MockDatum, req: requests):
     return res_xml
 
 
+@global_utils.clock
 def send_pay_res_notify(mock_datum: MockDatum, req: requests):
     body = gen_pay_res_notify_xml(mock_datum, req)
     method = mock_datum.extra.callback.method

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import socket, json
+import timeit
 
 import requests
 from flask import request
@@ -249,3 +250,16 @@ def dict_to_xml(res_dict_sorted, cdata=True, xml_statement=True, no_cdata=[]):
         return signed_xml
     else:
         return signed_xml[signed_xml.find('<xml>'):]
+
+
+def clock(func):
+    def clocked(*args, **kwargs):
+        t0 = timeit.default_timer()
+        result = func(*args, **kwargs)
+        elapsed = timeit.default_timer() - t0
+        name = func.__name__
+        arg_str = ', '.join(repr(arg) for arg in args)
+        kwargs_str = json.dumps(kwargs)
+        log.debug('[%0.8fs] %s(arg:%s,kwargs:%s) -> %r' % (elapsed, name, arg_str, kwargs_str, result))
+        return result
+    return clocked

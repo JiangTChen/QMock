@@ -323,6 +323,7 @@ def format_body_to_string(headers, value):
     return body
 
 
+@global_utils.clock
 def send_callback(mock_datum: MockDatum, req: request):
     method = mock_datum.extra.callback.method
     url = mock_datum.extra.callback.url

@@ -59,7 +59,8 @@ def post():
 
 @app.route(config.site_base_url + '/<project_name>/<module_name>/<path:url>',
            methods=['POST', 'GET', 'PUT', 'DELETE'])
-def db_access(project_name, module_name, url):
+@global_utils.clock
+def mock_main(project_name, module_name, url):
     try:
         log.info('-----> Request Url:' + request.url + ' ')
         database_name = project_name
