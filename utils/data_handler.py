@@ -133,8 +133,7 @@ def is_dict_matched(request_content, prepared_content):
                 for key in prepared_content.keys():
                     prepared_content_value = prepared_content.get(key)
                     request_content_value = request_content.get(key)
-                    prepared_content_value_str = str(prepared_content_value).replace('-',
-                                                                                     '\\-')  # re.match unsupport '-' in "dd-authorization.pop-up.template-code"
+                    prepared_content_value_str = str(prepared_content_value)
                     request_content_value_str = str(request_content_value)
                     m = re.match(prepared_content_value_str, request_content_value_str)
                     if m is None:
