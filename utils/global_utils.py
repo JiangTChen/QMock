@@ -15,6 +15,7 @@ import hmac
 from constant import HashType, CaseType
 from global_vars import log
 import xmltodict
+from Object.mongoDB_service import MongoDBService
 
 
 def get_post_body_content(req: request, xml2json=True):
