@@ -218,11 +218,11 @@ def send_request_with_specified_params(method, url, headers, body, delay):
         info = "sleep:" + str(i) + "/" + str(delay)
         log.debug(info)
         time.sleep(1)
-    # body = json.dumps(body) if isinstance(body, dict) else body
     res = None
+    if 'application/json' in headers['Content-Type'].lower():
+        body = json.dumps(body) if isinstance(body, dict) else body
     if method == HTTPMethod.POST:
         res = requests.post(url, data=body, json=body, headers=headers)
-        # res = requests.request(method, url, headers=headers, json=body, data=body)
     elif method == HTTPMethod.GET:
         res = requests.get(url, params=body, headers=headers)
     log.info("<--------Send Request:" + res.url)
