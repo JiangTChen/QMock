@@ -3,21 +3,21 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   labels:
-    k8s-app: mock
-  name: mock
+    k8s-app: mock-server
+  name: mock-server
   namespace: lab-02
 spec:
   replicas: 1
   selector:
     matchLabels:
-      k8s-app: mock
+      k8s-app: mock-server
   template:
     metadata:
       labels:
-        k8s-app: mock
+        k8s-app: mock-server
     spec:
       containers:
-        - name: mock
+        - name: mock-server
           image: qa-gov.cn.lab/mock-server:$BUILD_NUMBER
           env:
             - name: MOCK_CONFIG_MONGODB_SERVER
@@ -30,11 +30,11 @@ spec:
             - containerPort: 8080
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "300m"
+              memory: "1Gi"
+              cpu: "500m"
             limits:
-              memory: "512Mi"
-              cpu: "300m"
+              memory: "1Gi"
+              cpu: "500m"
               # wechat-dd memory max=70 cpu max=1200, requests cpu recommend 1500
 ---
 kind: Deployment
@@ -57,16 +57,16 @@ spec:
     spec:
       containers:
         - name: mock-mongo
-          image: qa-gov.cn.lab/mongo:latest
+          image: qa-gov.cn.lab/mongo:4.1
           ports:
             - containerPort: 27017
           resources:
             requests:
               memory: "1Gi"
-              cpu: "300m"
+              cpu: "500m"
             limits:
               memory: "1Gi"
-              cpu: "300m"
+              cpu: "500m"
               #wechat-dd memory max=210 cpu max=180
           volumeMounts:
             - name: mock-mongo-volume
@@ -98,14 +98,14 @@ spec:
         - name: mock-mongo-express
           image: qa-gov.cn.lab/mongo-express:latest
           env:
-            # - name: ME_CONFIG_BASICAUTH_USERNAME
-            #   value: mock
-            # - name: ME_CONFIG_BASICAUTH_PASSWORD
-            #   value: $ME_PASSWORD
+#            - name: ME_CONFIG_BASICAUTH_USERNAME
+#              value: hccer
+#            - name: ME_CONFIG_BASICAUTH_PASSWORD
+#              value: hcc123456
             - name: ME_CONFIG_MONGODB_SERVER
               value: mock-mongo
             - name: ME_CONFIG_SITE_BASEURL
-              value: /mongo/mock
+              value: /mongo/mock/
           ports:
             - containerPort: 8081
           resources:
@@ -121,8 +121,8 @@ kind: Service
 apiVersion: v1
 metadata:
   labels:
-    k8s-app: mock
-  name: mock
+    k8s-app: mock-server
+  name: mock-server
   namespace: lab-02
 spec:
   ports:
@@ -130,7 +130,7 @@ spec:
       port: 8080
       targetPort: 8080
   selector:
-    k8s-app: mock
+    k8s-app: mock-server
 ---
 kind: Service
 apiVersion: v1
@@ -140,14 +140,10 @@ metadata:
   name: mock-mongo
   namespace: lab-02
 spec:
-  # externalTrafficPolicy: Local
-  # type: LoadBalancer
-  type: NodePort
   ports:
-    - name: mongo-db
+    - name: web
       port: 27017
       targetPort: 27017
-      nodePort: 30017
   selector:
     k8s-app: mock-mongo
 ---
@@ -170,7 +166,7 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: mock
+  name: mock-server
   namespace: lab-02
   annotations:
     kubernetes.io/ingress.class: traefik
@@ -180,7 +176,7 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: mock
+              serviceName: mock-server
               servicePort: 8080
             path: /mock
 ---
@@ -199,4 +195,4 @@ spec:
           - backend:
               serviceName: mock-mongo-express
               servicePort: 8081
-            path: /mongo/mock
+            path: /mongo/mock/
