@@ -111,16 +111,16 @@ docker-compose up
             },
             "body": {"key":"value"},
             "Delay": 5
-        }
-        "Disable":False,
+        },
+        "Disable": false,
         "Delay":3,
         "Step":1,
         "Times":3,
-        "Permanent":False #custom response only
+        "Permanent": false 
     }
 }
 ```
-
+"Permanent": false  #custom response only
 
 
 
