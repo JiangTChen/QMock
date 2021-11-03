@@ -128,48 +128,56 @@ docker-compose up
 - #### For Custom Response:
 
 1. Upload custom response:
+
    Url:http://localhost:8080/cache
-   Method:POST
-   Header:{"Content-Type":"application/json"}
-
-
-   ```json
-{
-	"request": {
-		"url": "/prject/uploadBankCard",
-		"method": "GET",
-		"queryParameters": "",
-		"bodyPatterns": ""
-	},
-	"response": {
-		"headers": "",
-		"status": 200,
-		"body": {
-			"id": 1234,
-			"name": "projectName"
-		}
-	},
-	"Extra": {
-		"Delay": 10,
-		"Permanent": false
-	}
-}
-   ```
-
    
-
+   Method:POST
+   
+   Header:{"Content-Type":"application/json"}
+   
+    ```json
+    {
+        "request": {
+            "url": "/project/uploadBankCard",
+            "method": "GET",
+            "queryParameters": "",
+            "bodyPatterns": ""
+        },
+        "response": {
+            "headers": "",
+            "status": 200,
+            "body": {
+                "id": 1234,
+                "name": "projectName"
+            }
+        },
+        "Extra": {
+            "Delay": 10,
+            "Permanent": false
+        }
+    }
+    ```
+   
 2. Get all custom responses:
+
    Url:http://localhost:8080/caches
+   
    Method:GET
 
 3. Delete custom response:
+
    Url:http://localhost:8080/cache
+   
    Method:DELETE
+   
    Header:{"Content-Type":"application/x-www-form-urlencoded"}
+   
    BODY:{"url":"/HCCN/hccn-be/uploadBankCard","method":"GET"}
 
 4. Drop all custom responses:
+
    Url:http://localhost:8080/caches
+   
    Method:DELETE
 
 
