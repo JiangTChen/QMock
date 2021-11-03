@@ -2,7 +2,7 @@ version: '3'
 
 services:
   mongo:
-    image: qa-gov.cn.lab/mongo
+    image: mongo
     container_name: mongo-db
     ports:
       - 27017:27017
@@ -15,7 +15,7 @@ services:
   mongo-express:
     links:
       - mongo
-    image: qa-gov.cn.lab/mongo-express
+    image: mongo-express
     container_name: mongo-express
     restart: always
     depends_on: 
